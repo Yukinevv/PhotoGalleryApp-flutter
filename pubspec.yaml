@@ -40,6 +40,9 @@ dependencies:
   mime: ^1.0.5
   url_launcher: ^6.2.6
   path: ^1.9.0
+  image_picker: ^1.1.1
+  image_cropper: ^6.0.0
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

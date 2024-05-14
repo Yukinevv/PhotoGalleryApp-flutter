@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Services/ApiService.dart';
 import 'register_form_view.dart'; // Zakładając, że już istnieje plik z widokiem rejestracji
 import 'dock_navigation_view.dart'; // Import DockNavigationView
@@ -18,9 +19,47 @@ class LoginFormView extends StatefulWidget {
 class _LoginFormViewState extends State<LoginFormView> {
   final TextEditingController _loginController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _rememberMe = false;
   String errorMessage = "";
 
   final ApiService apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedLogin = prefs.getString('savedLogin');
+    String? savedPassword = prefs.getString('savedPassword');
+    bool? rememberMe = prefs.getBool('rememberMe');
+
+    if (savedLogin != null &&
+        savedPassword != null &&
+        rememberMe != null &&
+        rememberMe) {
+      _loginController.text = savedLogin;
+      _passwordController.text = savedPassword;
+      setState(() {
+        _rememberMe = rememberMe;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setString('savedLogin', _loginController.text);
+      await prefs.setString('savedPassword', _passwordController.text);
+      await prefs.setBool('rememberMe', true);
+    } else {
+      await prefs.remove('savedLogin');
+      await prefs.remove('savedPassword');
+      await prefs.setBool('rememberMe', false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +101,19 @@ class _LoginFormViewState extends State<LoginFormView> {
                       obscureText: true,
                     ),
                     const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value!;
+                            });
+                          },
+                        ),
+                        const Text("Zapamiętaj mnie"),
+                      ],
+                    ),
                     if (errorMessage.isNotEmpty)
                       Text(errorMessage,
                           style: const TextStyle(color: Colors.red)),
@@ -94,9 +146,11 @@ class _LoginFormViewState extends State<LoginFormView> {
 
   void _loginUser() async {
     if (_loginController.text.isEmpty || _passwordController.text.isEmpty) {
-      setState(() {
-        errorMessage = "Uzupełnij wszystkie pola!";
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = "Uzupełnij wszystkie pola!";
+        });
+      }
       return;
     }
 
@@ -109,11 +163,15 @@ class _LoginFormViewState extends State<LoginFormView> {
 
       await apiService.login(user);
 
-      setState(() {
-        widget.userLogin.value = _loginController.text;
-        widget.isLoggedIn.value = true;
-        errorMessage = "";
-      });
+      if (mounted) {
+        setState(() {
+          widget.userLogin.value = _loginController.text;
+          widget.isLoggedIn.value = true;
+          errorMessage = "";
+        });
+      }
+
+      await _saveCredentials();
 
       // Przekierowanie do DockNavigationView po udanym logowaniu
       Navigator.pushReplacement(
@@ -126,9 +184,11 @@ class _LoginFormViewState extends State<LoginFormView> {
         ),
       );
     } catch (e) {
-      setState(() {
-        errorMessage = "Podano błędne dane!";
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = "Podano błędne dane!";
+        });
+      }
     }
   }
 }

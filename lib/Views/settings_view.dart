@@ -47,11 +47,13 @@ class SettingsView extends StatelessWidget {
           ListTile(
             title: const Text('Link do API'),
             onTap: () async {
-              const url = 'http://10.0.2.2:8080/api/users';
-              if (await canLaunch(url)) {
-                await launch(url);
+              const url =
+                  'https://pl.wikipedia.org/wiki/Interfejs_programowania_aplikacji';
+              final Uri uri = Uri.parse(url);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
               } else {
-                throw 'Could not launch $url';
+                // throw 'Could not launch $url';
               }
             },
           ),

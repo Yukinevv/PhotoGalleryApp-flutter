@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
@@ -30,6 +32,8 @@ class _FileUploadViewState extends State<FileUploadView> {
   String errorMessage = "Brak wybranego pliku.";
   bool isButtonDisabled = true;
 
+  final ImagePicker _picker = ImagePicker();
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -58,6 +62,35 @@ class _FileUploadViewState extends State<FileUploadView> {
               ],
             ),
           ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: captureImage,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.camera_alt),
+                SizedBox(width: 8),
+                Text("Zrób zdjęcie"),
+              ],
+            ),
+          ),
+          if (selectedFile != null)
+            Column(
+              children: [
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: cropImage,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.crop),
+                      SizedBox(width: 8),
+                      Text("Przytnij obraz"),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -85,6 +118,62 @@ class _FileUploadViewState extends State<FileUploadView> {
           isButtonDisabled = true;
         });
       }
+    }
+  }
+
+  Future<void> captureImage() async {
+    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+
+    if (photo != null) {
+      File file = File(photo.path);
+
+      if (isFileTypeAllowed(file)) {
+        setState(() {
+          selectedFile = file;
+          errorMessage = "Wybrany plik: ${basename(file.path)}";
+          isButtonDisabled = false;
+        });
+      } else {
+        setState(() {
+          errorMessage =
+              "Nieprawidłowy format pliku. Proszę wybrać plik .jpg lub .png";
+          isButtonDisabled = true;
+        });
+      }
+    }
+  }
+
+  Future<void> cropImage() async {
+    if (selectedFile == null) return;
+
+    CroppedFile? croppedFile = await ImageCropper().cropImage(
+      sourcePath: selectedFile!.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2,
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.ratio4x3,
+        CropAspectRatioPreset.ratio16x9
+      ],
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Przytnij obraz',
+          toolbarColor: Colors.blue,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          minimumAspectRatio: 1.0,
+        ),
+      ],
+    );
+
+    if (croppedFile != null) {
+      setState(() {
+        selectedFile = File(croppedFile.path);
+        errorMessage = "Wybrany plik: ${basename(selectedFile!.path)}";
+      });
     }
   }
 

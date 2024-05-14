@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../Models/MyImage.dart';
 import 'filters_view.dart'; // Zakładając, że FiltersView jest już zaimplementowany
 import 'selected_image_popup_view.dart'; // Zakładając, że SelectedImagePopupView jest już zaimplementowany
+import 'file_upload_view.dart'; // Dodajemy FileUploadView
 
 class ImageListView extends StatefulWidget {
   final String userLogin;
@@ -141,6 +142,24 @@ class _ImageListViewState extends State<ImageListView> {
                   ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (context) => FileUploadView(
+              userLogin: widget.userLogin,
+              category: widget.category,
+              closeSheet: () {
+                Navigator.pop(context);
+                loadImages();
+              },
+              loadImages: loadImages,
+            ),
+          );
+        },
+        child: const Icon(Icons.camera_alt),
       ),
     );
   }
