@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:photogalleryapp/Extensions/string_extension.dart';
 import 'dart:convert';
 import '../Models/MyImage.dart';
-// ignore: unused_import
 import 'filters_view.dart'; // Zakładając, że FiltersView jest już zaimplementowany
 import 'selected_image_popup_view.dart'; // Zakładając, że SelectedImagePopupView jest już zaimplementowany
 
@@ -21,7 +20,8 @@ class ImageListView extends StatefulWidget {
 
 class _ImageListViewState extends State<ImageListView> {
   List<MyImage> images = [];
-  String? selectedImage;
+  MyImage? selectedImage;
+  String filterField = "";
 
   @override
   void initState() {
@@ -34,9 +34,8 @@ class _ImageListViewState extends State<ImageListView> {
       return;
     }
 
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-    String category = widget.category
-        .replacePolishCharacters(); // Zakładając implementację tej metody
+    String apiUrl = "http://10.0.2.2:8080/api";
+    String category = widget.category.replacePolishCharacters();
 
     try {
       var response = await http
@@ -54,43 +53,88 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
+  List<MyImage> getFilteredImages() {
+    if (filterField.isEmpty) {
+      return images;
+    } else {
+      return images
+          .where((image) =>
+              image.filename.toLowerCase().contains(filterField.toLowerCase()))
+          .toList();
+    }
+  }
+
+  void sortByName(bool ascending) {
+    setState(() {
+      images.sort((a, b) {
+        if (ascending) {
+          return a.filename.toLowerCase().compareTo(b.filename.toLowerCase());
+        } else {
+          return b.filename.toLowerCase().compareTo(a.filename.toLowerCase());
+        }
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Image List'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
       ),
-      body: images.isEmpty
-          ? const Center(child: Text("Nie wstawiono jeszcze żadnego obrazu..."))
-          : ListView.builder(
-              itemCount: images.length,
-              itemBuilder: (context, index) {
-                var image = images[index];
-                return ListTile(
-                  title: Text(image.filename),
-                  onTap: () {
-                    setState(() {
-                      selectedImage = image.id;
-                    });
-                    showDialog(
-                      context: context,
-                      builder: (context) => SelectedImagePopupView(
-                        reloadImages: loadImages,
-                        selectedImage: image,
-                        loadImages: () {},
-                        onClose: () {},
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+      body: Column(
+        children: [
+          FiltersView(
+            userLogin: widget.userLogin,
+            category: widget.category,
+            filteredImagesCount: getFilteredImages().length,
+            filterField: ValueNotifier<String>(filterField),
+            sortByName: sortByName,
+            loadImages: loadImages,
+          ),
+          Expanded(
+            child: images.isEmpty
+                ? const Center(
+                    child: Text("Nie wstawiono jeszcze żadnego obrazu..."))
+                : ListView.builder(
+                    itemCount: getFilteredImages().length,
+                    itemBuilder: (context, index) {
+                      var image = getFilteredImages()[index];
+                      return ListTile(
+                        title: Text(image.filename),
+                        // ignore: unnecessary_null_comparison
+                        subtitle: image.data != null
+                            ? Image.memory(base64Decode(image.data))
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            selectedImage = image;
+                          });
+                          showDialog(
+                            context: context,
+                            builder: (context) => SelectedImagePopupView(
+                              selectedImage: image,
+                              loadImages: loadImages,
+                              onClose: () {
+                                setState(() {
+                                  selectedImage = null;
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
-import 'package:mime/mime.dart';
+import 'package:http/http.dart' as http;
 import 'dart:io';
-
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart';
 import 'package:photogalleryapp/Extensions/string_extension.dart';
 
 class FileUploadView extends StatefulWidget {
@@ -31,56 +32,50 @@ class _FileUploadViewState extends State<FileUploadView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Dodaj obraz"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: widget.closeSheet,
-          )
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ElevatedButton(
+            onPressed: isButtonDisabled ? null : uploadImage,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isButtonDisabled ? Colors.grey : Colors.blue,
+            ),
+            child: const Text("Dodaj obraz"),
+          ),
+          const SizedBox(height: 20),
+          Text(errorMessage),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: selectFile,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.file_upload),
+                SizedBox(width: 8),
+                Text("Wybierz plik"),
+              ],
+            ),
+          ),
         ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: isButtonDisabled ? null : uploadImage,
-              child: Text("Dodaj obraz"),
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(
-                    isButtonDisabled ? Colors.grey : Colors.blue),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(errorMessage),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: selectFile,
-              child: const Text("Wybierz plik"),
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  void selectFile() async {
+  Future<void> selectFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['jpg', 'jpeg', 'png'],
     );
 
-    if (result != null && result.files.single.path != null) {
-      selectedFile = File(result.files.single.path!);
-      final mimeTypeData =
-          lookupMimeType(selectedFile!.path, headerBytes: [0xFF, 0xD8])
-              ?.split('/');
-      if (mimeTypeData != null && ['jpeg', 'png'].contains(mimeTypeData[1])) {
+    if (result != null && result.files.isNotEmpty) {
+      File file = File(result.files.single.path!);
+
+      if (isFileTypeAllowed(file)) {
         setState(() {
-          errorMessage = "Wybrany plik: ${selectedFile!.path.split('/').last}";
+          selectedFile = file;
+          errorMessage = "Wybrany plik: ${basename(file.path)}";
           isButtonDisabled = false;
         });
       } else {
@@ -90,39 +85,49 @@ class _FileUploadViewState extends State<FileUploadView> {
           isButtonDisabled = true;
         });
       }
-    } else {
-      setState(() {
-        errorMessage = "Nie wybrano pliku.";
-        isButtonDisabled = true;
-      });
     }
   }
 
-  void uploadImage() async {
-    if (selectedFile == null) {
-      setState(() {
-        errorMessage = "Brak wybranego pliku.";
-      });
+  bool isFileTypeAllowed(File file) {
+    final mimeType = lookupMimeType(file.path);
+    return mimeType == 'image/jpeg' || mimeType == 'image/png';
+  }
+
+  Future<void> uploadImage() async {
+    if (widget.userLogin.isEmpty ||
+        widget.category.isEmpty ||
+        selectedFile == null) {
       return;
     }
 
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-    String category = widget.category
-        .replacePolishCharacters(); // Assuming replacePolishCharacters() is implemented
+    String category = widget.category.replacePolishCharacters();
+    String apiUrl =
+        "http://10.0.2.2:8080/api/images/upload/${widget.userLogin}/$category";
 
-    var request = http.MultipartRequest('POST',
-        Uri.parse('$apiUrl/images/upload/${widget.userLogin}/$category'));
-    request.files
-        .add(await http.MultipartFile.fromPath('image', selectedFile!.path));
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl))
+        ..headers['Content-Type'] = 'multipart/form-data'
+        ..files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            selectedFile!.path,
+            contentType: MediaType.parse(lookupMimeType(selectedFile!.path)!),
+          ),
+        );
 
-    var response = await request.send();
+      var response = await request.send();
 
-    if (response.statusCode == 200) {
-      widget.loadImages();
-      widget.closeSheet();
-    } else {
+      if (response.statusCode == 200) {
+        widget.loadImages();
+        widget.closeSheet();
+      } else {
+        setState(() {
+          errorMessage = "Failed to upload image: ${response.statusCode}";
+        });
+      }
+    } catch (e) {
       setState(() {
-        errorMessage = "Wystąpił błąd podczas wysyłania obrazu.";
+        errorMessage = "Image upload failed: $e";
       });
     }
   }

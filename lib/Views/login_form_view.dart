@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'register_form_view.dart'; // Załóżmy, że już istnieje plik z widokiem rejestracji
+import '../Services/ApiService.dart';
+import 'register_form_view.dart'; // Zakładając, że już istnieje plik z widokiem rejestracji
+import 'dock_navigation_view.dart'; // Import DockNavigationView
 
 class LoginFormView extends StatefulWidget {
   const LoginFormView(
@@ -18,11 +20,15 @@ class _LoginFormViewState extends State<LoginFormView> {
   final TextEditingController _passwordController = TextEditingController();
   String errorMessage = "";
 
+  final ApiService apiService = ApiService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Photo Gallery'), automaticallyImplyLeading: false),
+        title: const Text('Photo Gallery'),
+        automaticallyImplyLeading: false,
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -86,18 +92,43 @@ class _LoginFormViewState extends State<LoginFormView> {
     );
   }
 
-  void _loginUser() {
+  void _loginUser() async {
     if (_loginController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
         errorMessage = "Uzupełnij wszystkie pola!";
       });
       return;
     }
-    // Implementacja logowania - zastąp to odpowiednią logiką API
-    setState(() {
-      widget.userLogin.value = _loginController.text;
-      widget.isLoggedIn.value = true;
-      errorMessage = "";
-    });
+
+    try {
+      User user = User(
+        login: _loginController.text,
+        password: _passwordController.text,
+        email: '', // Email nie jest wymagany przy logowaniu
+      );
+
+      await apiService.login(user);
+
+      setState(() {
+        widget.userLogin.value = _loginController.text;
+        widget.isLoggedIn.value = true;
+        errorMessage = "";
+      });
+
+      // Przekierowanie do DockNavigationView po udanym logowaniu
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DockNavigationView(
+            isLoggedIn: widget.isLoggedIn,
+            userLogin: widget.userLogin.value,
+          ),
+        ),
+      );
+    } catch (e) {
+      setState(() {
+        errorMessage = "Podano błędne dane!";
+      });
+    }
   }
 }

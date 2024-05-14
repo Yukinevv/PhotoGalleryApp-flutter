@@ -1,8 +1,9 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-// ignore: unused_import
 import 'dart:convert';
-
+import 'package:path/path.dart';
 import '../Models/MyImage.dart';
 
 class SelectedImagePopupView extends StatefulWidget {
@@ -14,7 +15,7 @@ class SelectedImagePopupView extends StatefulWidget {
     Key? key,
     required this.selectedImage,
     required this.loadImages,
-    required this.onClose, required Future<void> Function() reloadImages,
+    required this.onClose,
   }) : super(key: key);
 
   @override
@@ -22,7 +23,7 @@ class SelectedImagePopupView extends StatefulWidget {
 }
 
 class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
-  TextEditingController _filenameController = TextEditingController();
+  final TextEditingController _filenameController = TextEditingController();
   String errorMessage = "";
 
   @override
@@ -47,16 +48,16 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
             ),
           ),
           const SizedBox(height: 20),
-          if (widget.selectedImage.image !=
-              null) // Assuming image is already an Image widget
-            Image(image: widget.selectedImage.image),
+          // ignore: unnecessary_null_comparison
+          if (widget.selectedImage.data != null)
+            Image.memory(base64Decode(widget.selectedImage.data)),
           Text(widget.selectedImage.filename),
         ],
       ),
       actions: <Widget>[
         TextButton(
           child: const Text("Zmień nazwę"),
-          onPressed: () => _changeFilename(context),
+          onPressed: () => _confirmChangeFilename(context),
         ),
         TextButton(
           child: const Text("Usuń zdjęcie"),
@@ -66,7 +67,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     );
   }
 
-  void _changeFilename(BuildContext context) {
+  void _confirmChangeFilename(BuildContext context) {
     if (_filenameController.text.isEmpty) {
       setState(() {
         errorMessage = "Nie podano nowej nazwy!";
@@ -74,7 +75,34 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
       return;
     }
 
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Zmiana nazwy"),
+          content: const Text("Czy na pewno chcesz zmienić nazwę tego obrazu?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Tak"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the confirmation dialog
+                _changeFilename(context);
+              },
+            ),
+            TextButton(
+              child: const Text("Nie"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _changeFilename(BuildContext context) {
+    String apiUrl = "http://10.0.2.2:8080/api";
     String url =
         "$apiUrl/images/editFilename/${widget.selectedImage.id}/${_filenameController.text}";
 
@@ -107,7 +135,10 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
           actions: <Widget>[
             TextButton(
               child: const Text("Tak"),
-              onPressed: () => _deleteImage(context),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the confirmation dialog
+                _deleteImage(context);
+              },
             ),
             TextButton(
               child: const Text("Nie"),
@@ -122,14 +153,13 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
   }
 
   void _deleteImage(BuildContext context) {
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
+    String apiUrl = "http://10.0.2.2:8080/api";
     String url = "$apiUrl/images/delete/${widget.selectedImage.id}";
 
     http.delete(Uri.parse(url)).then((response) {
       if (response.statusCode == 200) {
         widget.loadImages();
         widget.onClose();
-        Navigator.of(context).pop(); // Close the confirmation dialog
         Navigator.of(context).pop(); // Close the popup
       } else {
         setState(() {
@@ -143,11 +173,3 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     });
   }
 }
-
-// class MyImage {
-//   final String id;
-//   final String filename;
-//   Image image;
-
-//   MyImage({required this.id, required this.filename, required this.image});
-// }

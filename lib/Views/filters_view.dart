@@ -53,7 +53,7 @@ class _FiltersViewState extends State<FiltersView> {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              Text("Sortuj:"),
+              const Text("Sortuj:"),
               IconButton(
                 icon: const Icon(Icons.arrow_upward,
                     color: Colors.blue, size: 35),
@@ -64,13 +64,14 @@ class _FiltersViewState extends State<FiltersView> {
                     color: Colors.blue, size: 35),
                 onPressed: () => widget.sortByName(false),
               ),
-              Spacer(),
+              const Spacer(),
               ElevatedButton(
                 onPressed: () {
                   setState(() => isSheetPresented = true);
                   if (isSheetPresented) {
                     showModalBottomSheet(
                       context: context,
+                      isScrollControlled: true,
                       builder: (context) => FileUploadView(
                         userLogin: widget.userLogin,
                         category: widget.category,
@@ -78,12 +79,11 @@ class _FiltersViewState extends State<FiltersView> {
                           setState(() => isSheetPresented = false);
                           widget.loadImages();
                         },
-                        loadImages: () {}, // do utworzenia
+                        loadImages: () {},
                       ),
                     );
                   }
                 },
-                child: const Text('Dodaj obraz'),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: Colors.blue,
@@ -92,6 +92,7 @@ class _FiltersViewState extends State<FiltersView> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
+                child: const Text('Dodaj obraz'),
               ),
             ],
           ),

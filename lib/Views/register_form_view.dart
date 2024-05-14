@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Services/ApiService.dart';
 import 'login_form_view.dart'; // Zakładając, że LoginFormView jest już zaimplementowane
 
 class RegisterFormView extends StatefulWidget {
@@ -20,6 +21,8 @@ class _RegisterFormViewState extends State<RegisterFormView> {
   final TextEditingController _password2Controller = TextEditingController();
   String errorMessage = '';
   String successMessage = '';
+
+  final ApiService apiService = ApiService();
 
   bool isInputInvalid1 = false;
   bool isInputInvalid2 = false;
@@ -107,7 +110,7 @@ class _RegisterFormViewState extends State<RegisterFormView> {
     );
   }
 
-  void _registerUser() {
+  void _registerUser() async {
     if (_password1Controller.text != _password2Controller.text) {
       setState(() => errorMessage = "Podane hasła nie są takie same!");
     } else if (_loginController.text.isEmpty ||
@@ -117,12 +120,26 @@ class _RegisterFormViewState extends State<RegisterFormView> {
     } else if (_password1Controller.text.length < 5) {
       setState(() => errorMessage = "Hasło nie może mieć mniej niż 5 znaków!");
     } else {
-      // Tutaj zaimplementuj logikę API do rejestracji użytkownika
-      setState(() {
-        errorMessage = '';
-        successMessage = 'Konto zostało utworzone!';
-        // Przypuszczamy, że rejestracja zakończyła się sukcesem
-      });
+      try {
+        User user = User(
+          login: _loginController.text,
+          password: _password1Controller.text,
+          email: _emailController.text,
+        );
+
+        await apiService.createUser(user);
+
+        setState(() {
+          errorMessage = '';
+          successMessage = 'Konto zostało utworzone!';
+          widget.userLogin.value = _loginController.text;
+          widget.isLoggedIn.value = true;
+        });
+      } catch (e) {
+        setState(() {
+          errorMessage = 'Wystąpił błąd podczas rejestracji!';
+        });
+      }
     }
   }
 }

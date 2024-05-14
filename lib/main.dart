@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'Views/login_form_view.dart'; // Upewnij się, że ścieżka do tego pliku jest poprawna
-import 'Views/category_list_view.dart'; // Import CategoryListView
+import 'Views/dock_navigation_view.dart';
+import 'Views/login_form_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,10 +41,9 @@ class _MyHomePageState extends State<MyHomePage> {
       valueListenable: _isLoggedIn,
       builder: (context, isLoggedIn, child) {
         if (isLoggedIn) {
-          // Gdy użytkownik jest zalogowany, pokazujemy CategoryListView
-          return CategoryListView(userLogin: _userLogin.value);
+          return DockNavigationView(
+              isLoggedIn: _isLoggedIn, userLogin: _userLogin.value);
         } else {
-          // Gdy użytkownik nie jest zalogowany, pokazujemy formularz logowania
           return LoginFormView(isLoggedIn: _isLoggedIn, userLogin: _userLogin);
         }
       },

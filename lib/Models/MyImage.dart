@@ -14,4 +14,6 @@ class MyImage {
   }
 
   get image => this;
+
+  String get imageUrl => data;
 }
