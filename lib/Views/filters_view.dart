@@ -35,13 +35,21 @@ class _FiltersViewState extends State<FiltersView> {
           child: Row(
             children: [
               Expanded(
-                child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Szukaj obrazów',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) => widget.filterField.value = value,
-                  autocorrect: false,
+                child: ValueListenableBuilder<String>(
+                  valueListenable: widget.filterField,
+                  builder: (context, value, child) {
+                    return TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Szukaj obrazów',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        widget.filterField.value = value;
+                        widget.loadImages();
+                      },
+                      autocorrect: false,
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 10),

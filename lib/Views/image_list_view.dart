@@ -21,7 +21,7 @@ class ImageListView extends StatefulWidget {
 class _ImageListViewState extends State<ImageListView> {
   List<MyImage> images = [];
   MyImage? selectedImage;
-  String filterField = "";
+  ValueNotifier<String> filterField = ValueNotifier<String>("");
 
   @override
   void initState() {
@@ -54,12 +54,13 @@ class _ImageListViewState extends State<ImageListView> {
   }
 
   List<MyImage> getFilteredImages() {
-    if (filterField.isEmpty) {
+    if (filterField.value.isEmpty) {
       return images;
     } else {
       return images
-          .where((image) =>
-              image.filename.toLowerCase().contains(filterField.toLowerCase()))
+          .where((image) => image.filename
+              .toLowerCase()
+              .contains(filterField.value.toLowerCase()))
           .toList();
     }
   }
@@ -94,7 +95,7 @@ class _ImageListViewState extends State<ImageListView> {
             userLogin: widget.userLogin,
             category: widget.category,
             filteredImagesCount: getFilteredImages().length,
-            filterField: ValueNotifier<String>(filterField),
+            filterField: filterField,
             sortByName: sortByName,
             loadImages: loadImages,
           ),
@@ -102,31 +103,37 @@ class _ImageListViewState extends State<ImageListView> {
             child: images.isEmpty
                 ? const Center(
                     child: Text("Nie wstawiono jeszcze żadnego obrazu..."))
-                : ListView.builder(
-                    itemCount: getFilteredImages().length,
-                    itemBuilder: (context, index) {
-                      var image = getFilteredImages()[index];
-                      return ListTile(
-                        title: Text(image.filename),
-                        // ignore: unnecessary_null_comparison
-                        subtitle: image.data != null
-                            ? Image.memory(base64Decode(image.data))
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            selectedImage = image;
-                          });
-                          showDialog(
-                            context: context,
-                            builder: (context) => SelectedImagePopupView(
-                              selectedImage: image,
-                              loadImages: loadImages,
-                              onClose: () {
-                                setState(() {
-                                  selectedImage = null;
-                                });
-                              },
-                            ),
+                : ValueListenableBuilder<String>(
+                    valueListenable: filterField,
+                    builder: (context, value, child) {
+                      var filteredImages = getFilteredImages();
+                      return ListView.builder(
+                        itemCount: filteredImages.length,
+                        itemBuilder: (context, index) {
+                          var image = filteredImages[index];
+                          return ListTile(
+                            title: Text(image.filename),
+                            // ignore: unnecessary_null_comparison
+                            subtitle: image.data != null
+                                ? Image.memory(base64Decode(image.data))
+                                : null,
+                            onTap: () {
+                              setState(() {
+                                selectedImage = image;
+                              });
+                              showDialog(
+                                context: context,
+                                builder: (context) => SelectedImagePopupView(
+                                  selectedImage: image,
+                                  loadImages: loadImages,
+                                  onClose: () {
+                                    setState(() {
+                                      selectedImage = null;
+                                    });
+                                  },
+                                ),
+                              );
+                            },
                           );
                         },
                       );
