@@ -34,36 +34,45 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text("Podaj nazwę zdjęcia:"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _filenameController,
-            decoration: InputDecoration(
-              hintText: "New Filename",
-              errorText: errorMessage.isEmpty ? null : errorMessage,
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(viewInsets: EdgeInsets.zero),
+          child: AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text("Podaj nazwę zdjęcia:"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _filenameController,
+                    decoration: InputDecoration(
+                      hintText: "New Filename",
+                      errorText: errorMessage.isEmpty ? null : errorMessage,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (widget.selectedImage.data != null)
+                    Image.memory(base64Decode(widget.selectedImage.data)),
+                  Text(widget.selectedImage.filename),
+                ],
+              ),
             ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("Zmień nazwę"),
+                onPressed: () => _confirmChangeFilename(context),
+              ),
+              TextButton(
+                child: const Text("Usuń zdjęcie"),
+                onPressed: () => _confirmDelete(context),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          // ignore: unnecessary_null_comparison
-          if (widget.selectedImage.data != null)
-            Image.memory(base64Decode(widget.selectedImage.data)),
-          Text(widget.selectedImage.filename),
-        ],
-      ),
-      actions: <Widget>[
-        TextButton(
-          child: const Text("Zmień nazwę"),
-          onPressed: () => _confirmChangeFilename(context),
-        ),
-        TextButton(
-          child: const Text("Usuń zdjęcie"),
-          onPressed: () => _confirmDelete(context),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -102,7 +111,8 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
   }
 
   void _changeFilename(BuildContext context) {
-    String apiUrl = "http://10.0.2.2:8080/api";
+    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
+    // final String apiUrl = "http://10.0.2.2:8080/api";
     String url =
         "$apiUrl/images/editFilename/${widget.selectedImage.id}/${_filenameController.text}";
 
@@ -153,7 +163,8 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
   }
 
   void _deleteImage(BuildContext context) {
-    String apiUrl = "http://10.0.2.2:8080/api";
+    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
+    // final String apiUrl = "http://10.0.2.2:8080/api";
     String url = "$apiUrl/images/delete/${widget.selectedImage.id}";
 
     http.delete(Uri.parse(url)).then((response) {

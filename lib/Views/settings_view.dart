@@ -48,12 +48,35 @@ class SettingsView extends StatelessWidget {
             title: const Text('Link do API'),
             onTap: () async {
               const url =
+                  "https://photo-gallery-api-59f6baae823c.herokuapp.com/api/images";
+              final Uri uri = Uri.parse(url);
+              print('Attempting to launch URL: $url');
+              if (await canLaunchUrl(uri)) {
+                print('Launching URL');
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } else {
+                print('Could not launch URL');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Nie można otworzyć URL')),
+                );
+              }
+            },
+          ),
+          ListTile(
+            title: const Text('Inny link'),
+            onTap: () async {
+              const url =
                   'https://pl.wikipedia.org/wiki/Interfejs_programowania_aplikacji';
               final Uri uri = Uri.parse(url);
+              print('Attempting to launch URL: $url');
               if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
+                print('Launching URL');
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
               } else {
-                // throw 'Could not launch $url';
+                print('Could not launch URL');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Nie można otworzyć URL')),
+                );
               }
             },
           ),

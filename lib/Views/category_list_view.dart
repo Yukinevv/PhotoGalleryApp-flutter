@@ -10,7 +10,12 @@ class CategoryListView extends StatelessWidget {
     "Zwierzęta",
     "Sport",
     "Gry",
-    "Inne"
+    "Architektura",
+    "Moda",
+    "Jedzenie",
+    "Technologia",
+    "Podróże",
+    "Inne",
   ];
 
   @override
@@ -49,13 +54,23 @@ class CategoryListView extends StatelessWidget {
   IconInfo iconForCategory(String category) {
     switch (category) {
       case "Krajobraz":
-        return IconInfo(Icons.grid_on, Colors.blue);
+        return IconInfo(Icons.landscape, Colors.blue);
       case "Zwierzęta":
         return IconInfo(Icons.pets, Colors.green);
       case "Sport":
         return IconInfo(Icons.sports_soccer, Colors.red);
       case "Gry":
         return IconInfo(Icons.games, Colors.orange);
+      case "Architektura":
+        return IconInfo(Icons.account_balance, Colors.brown);
+      case "Moda":
+        return IconInfo(Icons.style, Colors.pink);
+      case "Jedzenie":
+        return IconInfo(Icons.fastfood, Colors.yellow);
+      case "Technologia":
+        return IconInfo(Icons.computer, Colors.teal);
+      case "Podróże":
+        return IconInfo(Icons.airplanemode_active, Colors.cyan);
       case "Inne":
         return IconInfo(Icons.more_horiz, Colors.purple);
       default:

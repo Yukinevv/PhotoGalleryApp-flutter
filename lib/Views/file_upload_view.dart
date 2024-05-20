@@ -190,8 +190,11 @@ class _FileUploadViewState extends State<FileUploadView> {
     }
 
     String category = widget.category.replacePolishCharacters();
-    String apiUrl =
-        "http://10.0.2.2:8080/api/images/upload/${widget.userLogin}/$category";
+
+    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
+    // final String apiUrl = "http://10.0.2.2:8080/api";
+
+    apiUrl = "$apiUrl/images/upload/${widget.userLogin}/$category";
 
     try {
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl))
