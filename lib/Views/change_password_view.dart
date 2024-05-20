@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:photogalleryapp/constants.dart';
+
 class ChangePasswordView extends StatefulWidget {
   final String userLogin;
 
@@ -173,8 +175,6 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
       return;
     }
 
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-    // final String apiUrl = "http://10.0.2.2:8080/api";
     String url =
         "$apiUrl/users/editPassword/${widget.userLogin}/$currentPassword/$newPassword";
 

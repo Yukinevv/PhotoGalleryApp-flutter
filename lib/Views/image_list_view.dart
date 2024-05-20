@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:photogalleryapp/Extensions/string_extension.dart';
+import 'package:photogalleryapp/constants.dart';
 import 'dart:convert';
 import '../Models/MyImage.dart';
-import 'filters_view.dart'; // Zakładając, że FiltersView jest już zaimplementowany
-import 'selected_image_popup_view.dart'; // Zakładając, że SelectedImagePopupView jest już zaimplementowany
-import 'file_upload_view.dart'; // Dodajemy FileUploadView
+import 'filters_view.dart';
+import 'selected_image_popup_view.dart';
+import 'file_upload_view.dart';
 
 class ImageListView extends StatefulWidget {
   final String userLogin;
@@ -35,8 +36,6 @@ class _ImageListViewState extends State<ImageListView> {
       return;
     }
 
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-    // final String apiUrl = "http://10.0.2.2:8080/api";
     String category = widget.category.replacePolishCharacters();
 
     try {

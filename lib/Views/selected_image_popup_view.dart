@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:path/path.dart';
+import 'package:photogalleryapp/constants.dart';
 import '../Models/MyImage.dart';
 
 class SelectedImagePopupView extends StatefulWidget {
@@ -54,8 +55,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  if (widget.selectedImage.data != null)
-                    Image.memory(base64Decode(widget.selectedImage.data)),
+                  Image.memory(base64Decode(widget.selectedImage.data)),
                   Text(widget.selectedImage.filename),
                 ],
               ),
@@ -110,13 +110,14 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     );
   }
 
-  void _changeFilename(BuildContext context) {
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-    // final String apiUrl = "http://10.0.2.2:8080/api";
+  void _changeFilename(BuildContext context) async {
     String url =
         "$apiUrl/images/editFilename/${widget.selectedImage.id}/${_filenameController.text}";
 
-    http.put(Uri.parse(url)).then((response) {
+    try {
+      final response = await http.put(Uri.parse(url));
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         setState(() {
           widget.selectedImage.filename = _filenameController.text;
@@ -125,14 +126,16 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
         Navigator.of(context).pop();
       } else {
         setState(() {
-          errorMessage = "Error changing image filename";
+          errorMessage =
+              "Error changing image filename: ${response.reasonPhrase}";
         });
       }
-    }).catchError((error) {
-      setState(() {
-        errorMessage = "Network error";
-      });
-    });
+    } catch (error) {
+      if (!mounted) return;
+      // setState(() {
+      //   errorMessage = "Network error: $error";
+      // });
+    }
   }
 
   void _confirmDelete(BuildContext context) {
@@ -162,25 +165,27 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     );
   }
 
-  void _deleteImage(BuildContext context) {
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-    // final String apiUrl = "http://10.0.2.2:8080/api";
+  void _deleteImage(BuildContext context) async {
     String url = "$apiUrl/images/delete/${widget.selectedImage.id}";
 
-    http.delete(Uri.parse(url)).then((response) {
+    try {
+      final response = await http.delete(Uri.parse(url));
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         widget.loadImages();
         widget.onClose();
         Navigator.of(context).pop(); // Close the popup
       } else {
         setState(() {
-          errorMessage = "Error deleting image";
+          errorMessage = "Error deleting image: ${response.reasonPhrase}";
         });
       }
-    }).catchError((error) {
+    } catch (error) {
+      if (!mounted) return;
       setState(() {
-        errorMessage = "Network error";
+        errorMessage = "Network error: $error";
       });
-    });
+    }
   }
 }

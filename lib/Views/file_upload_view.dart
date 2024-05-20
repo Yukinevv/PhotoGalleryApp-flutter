@@ -8,6 +8,7 @@ import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart';
 import 'package:photogalleryapp/Extensions/string_extension.dart';
+import 'package:photogalleryapp/constants.dart';
 
 class FileUploadView extends StatefulWidget {
   final String userLogin;
@@ -191,13 +192,10 @@ class _FileUploadViewState extends State<FileUploadView> {
 
     String category = widget.category.replacePolishCharacters();
 
-    String apiUrl = "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-    // final String apiUrl = "http://10.0.2.2:8080/api";
-
-    apiUrl = "$apiUrl/images/upload/${widget.userLogin}/$category";
+    String url = "$apiUrl/images/upload/${widget.userLogin}/$category";
 
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(apiUrl))
+      var request = http.MultipartRequest('POST', Uri.parse(url))
         ..headers['Content-Type'] = 'multipart/form-data'
         ..files.add(
           await http.MultipartFile.fromPath(

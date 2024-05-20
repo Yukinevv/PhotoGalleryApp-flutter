@@ -1,11 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:photogalleryapp/constants.dart';
 
 class ApiService {
-  final String apiUrl =
-      "https://photo-gallery-api-59f6baae823c.herokuapp.com/api";
-  // final String apiUrl = "http://10.0.2.2:8080/api";
-
   Future<void> createUser(User user) async {
     final url = Uri.parse('$apiUrl/users/add');
     final headers = {'Content-Type': 'application/json'};
