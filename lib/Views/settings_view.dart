@@ -19,9 +19,9 @@ class SettingsView extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          const ListTile(
-            title: Text('Użytkownik',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+          ListTile(
+            title: Text(userLogin,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           ListTile(
             title: const Text('Zmień hasło'),

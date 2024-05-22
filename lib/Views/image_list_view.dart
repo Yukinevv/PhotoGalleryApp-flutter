@@ -47,10 +47,10 @@ class _ImageListViewState extends State<ImageListView> {
           images = imageList.map((item) => MyImage.fromJson(item)).toList();
         });
       } else {
-        throw Exception('Failed to load images');
+        throw Exception('Nie udało się załadować obrazów');
       }
     } catch (e) {
-      print('Failed to load images: $e');
+      print('Nie udało się załadować obrazów: $e');
     }
   }
 
@@ -82,7 +82,7 @@ class _ImageListViewState extends State<ImageListView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Image List'),
+        title: Text(widget.category.replacePolishCharacters()),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {

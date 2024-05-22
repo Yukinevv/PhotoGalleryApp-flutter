@@ -50,7 +50,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
                   TextField(
                     controller: _filenameController,
                     decoration: InputDecoration(
-                      hintText: "New Filename",
+                      hintText: "Nowa nazwa pliku",
                       errorText: errorMessage.isEmpty ? null : errorMessage,
                     ),
                   ),
@@ -94,7 +94,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
             TextButton(
               child: const Text("Tak"),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the confirmation dialog
+                Navigator.of(context).pop(); // Zamknij okno potwierdzenia
                 _changeFilename(context);
               },
             ),
@@ -126,14 +126,13 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
         Navigator.of(context).pop();
       } else {
         setState(() {
-          errorMessage =
-              "Error changing image filename: ${response.reasonPhrase}";
+          errorMessage = "Błąd zmiany nazwy pliku: ${response.reasonPhrase}";
         });
       }
     } catch (error) {
       if (!mounted) return;
       // setState(() {
-      //   errorMessage = "Network error: $error";
+      //   errorMessage = "Błąd sieci: $error";
       // });
     }
   }
@@ -149,7 +148,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
             TextButton(
               child: const Text("Tak"),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the confirmation dialog
+                Navigator.of(context).pop(); // Zamknij okno potwierdzenia
                 _deleteImage(context);
               },
             ),
@@ -175,17 +174,35 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
       if (response.statusCode == 200) {
         widget.loadImages();
         widget.onClose();
-        Navigator.of(context).pop(); // Close the popup
+        Navigator.of(context).pop(); // Zamknij SelectedImagePopupView
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Sukces"),
+              content: const Text("Zdjęcie zostało usunięte pomyślnie!"),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text("OK"),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Zamknij okno sukcesu
+                  },
+                ),
+              ],
+            );
+          },
+        );
       } else {
         setState(() {
-          errorMessage = "Error deleting image: ${response.reasonPhrase}";
+          errorMessage = "Błąd usuwania obrazu: ${response.reasonPhrase}";
         });
       }
     } catch (error) {
       if (!mounted) return;
-      setState(() {
-        errorMessage = "Network error: $error";
-      });
+      // setState(() {
+      //   errorMessage = "Błąd sieci: $error";
+      // });
     }
   }
 }

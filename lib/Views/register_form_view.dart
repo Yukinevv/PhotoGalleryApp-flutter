@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../Services/ApiService.dart';
 import 'login_form_view.dart'; // Zakładając, że LoginFormView jest już zaimplementowane
+import 'dock_navigation_view.dart'; // Import DockNavigationView
 
 class RegisterFormView extends StatefulWidget {
   const RegisterFormView(
@@ -135,11 +136,52 @@ class _RegisterFormViewState extends State<RegisterFormView> {
           widget.userLogin.value = _loginController.text;
           widget.isLoggedIn.value = true;
         });
+
+        _showSuccessDialog();
       } catch (e) {
         setState(() {
           errorMessage = 'Wystąpił błąd podczas rejestracji!';
         });
       }
     }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        Future.delayed(Duration(seconds: 3), () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop(true);
+            _navigateToHome();
+          }
+        });
+        return AlertDialog(
+          title: const Text("Sukces"),
+          content: const Text("Konto zostało utworzone!"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+                _navigateToHome();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToHome() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DockNavigationView(
+          isLoggedIn: widget.isLoggedIn,
+          userLogin: widget.userLogin.value,
+        ),
+      ),
+    );
   }
 }
