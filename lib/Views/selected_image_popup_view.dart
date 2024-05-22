@@ -1,22 +1,22 @@
-// ignore_for_file: unused_import
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:path/path.dart';
-import 'package:photogalleryapp/constants.dart';
+
 import '../Models/MyImage.dart';
+import '../Services/ApiService.dart';
 
 class SelectedImagePopupView extends StatefulWidget {
   final MyImage selectedImage;
   final VoidCallback loadImages;
   final VoidCallback onClose;
+  final Function(MyImage) onUpdate; // Dodane
 
   const SelectedImagePopupView({
     Key? key,
     required this.selectedImage,
     required this.loadImages,
     required this.onClose,
+    required this.onUpdate, // Dodane
   }) : super(key: key);
 
   @override
@@ -26,6 +26,7 @@ class SelectedImagePopupView extends StatefulWidget {
 class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
   final TextEditingController _filenameController = TextEditingController();
   String errorMessage = "";
+  final ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -111,28 +112,18 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
   }
 
   void _changeFilename(BuildContext context) async {
-    String url =
-        "$apiUrl/images/editFilename/${widget.selectedImage.id}/${_filenameController.text}";
-
     try {
-      final response = await http.put(Uri.parse(url));
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        setState(() {
-          widget.selectedImage.filename = _filenameController.text;
-          widget.loadImages();
-        });
-        Navigator.of(context).pop();
-      } else {
-        setState(() {
-          errorMessage = "Błąd zmiany nazwy pliku: ${response.reasonPhrase}";
-        });
-      }
+      await apiService.changeFilename(
+          widget.selectedImage.id, _filenameController.text);
+      setState(() {
+        widget.selectedImage.filename = _filenameController.text;
+      });
+      widget.onUpdate(widget.selectedImage); // Dodane
+      widget.loadImages();
+      Navigator.of(context).pop();
     } catch (error) {
-      if (!mounted) return;
       // setState(() {
-      //   errorMessage = "Błąd sieci: $error";
+      //   errorMessage = "Błąd zmiany nazwy pliku: $error";
       // });
     }
   }
@@ -165,43 +156,32 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
   }
 
   void _deleteImage(BuildContext context) async {
-    String url = "$apiUrl/images/delete/${widget.selectedImage.id}";
-
     try {
-      final response = await http.delete(Uri.parse(url));
-      if (!mounted) return;
+      await apiService.deleteImage(widget.selectedImage.id);
+      widget.loadImages();
+      widget.onClose();
+      Navigator.of(context).pop(); // Zamknij SelectedImagePopupView
 
-      if (response.statusCode == 200) {
-        widget.loadImages();
-        widget.onClose();
-        Navigator.of(context).pop(); // Zamknij SelectedImagePopupView
-
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Sukces"),
-              content: const Text("Zdjęcie zostało usunięte pomyślnie!"),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text("OK"),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Zamknij okno sukcesu
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        setState(() {
-          errorMessage = "Błąd usuwania obrazu: ${response.reasonPhrase}";
-        });
-      }
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Sukces"),
+            content: const Text("Zdjęcie zostało usunięte pomyślnie!"),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("OK"),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Zamknij okno sukcesu
+                },
+              ),
+            ],
+          );
+        },
+      );
     } catch (error) {
-      if (!mounted) return;
       // setState(() {
-      //   errorMessage = "Błąd sieci: $error";
+      //   errorMessage = "Błąd usuwania obrazu: $error";
       // });
     }
   }

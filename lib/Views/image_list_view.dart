@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:photogalleryapp/Extensions/string_extension.dart';
-import 'package:photogalleryapp/constants.dart';
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
+
 import '../Models/MyImage.dart';
+import '../Services/ApiService.dart';
+import 'file_upload_view.dart';
 import 'filters_view.dart';
 import 'selected_image_popup_view.dart';
-import 'file_upload_view.dart';
 
 class ImageListView extends StatefulWidget {
   final String userLogin;
@@ -25,6 +25,8 @@ class _ImageListViewState extends State<ImageListView> {
   MyImage? selectedImage;
   ValueNotifier<String> filterField = ValueNotifier<String>("");
 
+  final ApiService apiService = ApiService();
+
   @override
   void initState() {
     super.initState();
@@ -32,26 +34,24 @@ class _ImageListViewState extends State<ImageListView> {
   }
 
   Future<void> loadImages() async {
-    if (widget.userLogin.isEmpty || widget.category.isEmpty) {
-      return;
-    }
-
-    String category = widget.category.replacePolishCharacters();
-
     try {
-      var response = await http
-          .get(Uri.parse("$apiUrl/images/${widget.userLogin}/$category"));
-      if (response.statusCode == 200) {
-        List<dynamic> imageList = jsonDecode(response.body);
-        setState(() {
-          images = imageList.map((item) => MyImage.fromJson(item)).toList();
-        });
-      } else {
-        throw Exception('Nie udało się załadować obrazów');
-      }
+      List<MyImage> fetchedImages =
+          await apiService.getImages(widget.userLogin, widget.category);
+      setState(() {
+        images = fetchedImages;
+      });
     } catch (e) {
-      print('Nie udało się załadować obrazów: $e');
+      print('Failed to load images: $e');
     }
+  }
+
+  void updateImage(MyImage updatedImage) {
+    setState(() {
+      final index = images.indexWhere((image) => image.id == updatedImage.id);
+      if (index != -1) {
+        images[index] = updatedImage;
+      }
+    });
   }
 
   List<MyImage> getFilteredImages() {
@@ -82,7 +82,7 @@ class _ImageListViewState extends State<ImageListView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.category.replacePolishCharacters()),
+        title: Text(widget.category),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -132,6 +132,7 @@ class _ImageListViewState extends State<ImageListView> {
                                       selectedImage = null;
                                     });
                                   },
+                                  onUpdate: updateImage, // Dodane
                                 ),
                               );
                             },

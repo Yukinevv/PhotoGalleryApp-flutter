@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'image_list_view.dart'; // Zakładamy, że ImageListView jest już zaimplementowane
 
 class CategoryListView extends StatelessWidget {
@@ -18,12 +19,25 @@ class CategoryListView extends StatelessWidget {
     "Inne",
   ];
 
+  Future<void> clearCache() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    print('Cache cleared');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Wybierz kategorię"),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: clearCache,
+            tooltip: "Wyczysc Cache",
+          ),
+        ],
       ),
       body: ListView.builder(
         itemCount: categories.length,

@@ -9,6 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart';
 import 'package:photogalleryapp/Extensions/string_extension.dart';
 import 'package:photogalleryapp/constants.dart';
+import '../Services/ApiService.dart';
 
 class FileUploadView extends StatefulWidget {
   final String userLogin;
@@ -34,6 +35,7 @@ class _FileUploadViewState extends State<FileUploadView> {
   bool isButtonDisabled = true;
 
   final ImagePicker _picker = ImagePicker();
+  final ApiService apiService = ApiService();
 
   @override
   Widget build(BuildContext context) {
