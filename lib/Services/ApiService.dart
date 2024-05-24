@@ -26,6 +26,7 @@ class ApiService {
     }
   }
 
+  // przechowuje tylko liste id zdjec
   Future<void> _addImageToCacheList(MyImage image) async {
     final prefs = await SharedPreferences.getInstance();
     List<String> cachedImages = prefs.getStringList('cachedImages') ?? [];
@@ -91,35 +92,40 @@ class ApiService {
     }
   }
 
-  Future<void> createUser(User user) async {
-    final url = Uri.parse('$apiUrl/users/add');
-    final headers = {'Content-Type': 'application/json'};
-    final body = jsonEncode(user.toJson());
-
-    try {
-      final response = await http.post(url, headers: headers, body: body);
-      if (response.statusCode != 201) {
-        throw Exception('HTTP Error: ${response.statusCode}');
-      }
-    } catch (error) {
-      throw Exception('Network error: $error');
+  Future<MyImage?> getCachedImage(String imageId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final filename = prefs.getString('image_filename_$imageId');
+    final data = prefs.getString('image_data_$imageId');
+    if (filename != null && data != null) {
+      return MyImage(id: imageId, filename: filename, data: data);
     }
+    return null;
   }
 
-  Future<void> login(User user) async {
-    final url = Uri.parse('$apiUrl/users/login');
-    final headers = {'Content-Type': 'application/json'};
-    final body = jsonEncode(user.toJson());
+  Future<MyImage?> getImage(
+      String userLogin, String category, String imageId) async {
+    MyImage? cachedImage = await getCachedImage(imageId);
+    if (cachedImage != null) {
+      return cachedImage;
+    }
 
     try {
-      final response = await http.post(url, headers: headers, body: body);
+      final response = await http
+          .get(Uri.parse('$apiUrl/images/$userLogin/$category/$imageId'));
       if (response.statusCode == 200) {
-        // Handle login success
+        Map<String, dynamic> data = jsonDecode(response.body);
+        MyImage image = MyImage.fromJson(data);
+
+        // Save image to cache
+        await _addImageToCacheList(image);
+
+        return image;
       } else {
-        throw Exception('HTTP Error: ${response.statusCode}');
+        throw Exception('Failed to load image');
       }
-    } catch (error) {
-      throw Exception('Network error: $error');
+    } catch (e) {
+      // On failure, return null
+      return null;
     }
   }
 
@@ -151,6 +157,38 @@ class ApiService {
               MyImage(id: imageId, filename: newFilename, data: imageData);
           await _saveImageToCache(image);
         }
+      } else {
+        throw Exception('HTTP Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Network error: $error');
+    }
+  }
+
+  Future<void> createUser(User user) async {
+    final url = Uri.parse('$apiUrl/users/add');
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode(user.toJson());
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode != 201) {
+        throw Exception('HTTP Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Network error: $error');
+    }
+  }
+
+  Future<void> login(User user) async {
+    final url = Uri.parse('$apiUrl/users/login');
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode(user.toJson());
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        // Handle login success
       } else {
         throw Exception('HTTP Error: ${response.statusCode}');
       }

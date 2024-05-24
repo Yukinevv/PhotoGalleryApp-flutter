@@ -24,8 +24,8 @@ class _ImageListViewState extends State<ImageListView> {
   List<MyImage> images = [];
   MyImage? selectedImage;
   ValueNotifier<String> filterField = ValueNotifier<String>("");
-
   final ApiService apiService = ApiService();
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -34,14 +34,32 @@ class _ImageListViewState extends State<ImageListView> {
   }
 
   Future<void> loadImages() async {
+    setState(() {
+      isLoading = true;
+    });
     try {
       List<MyImage> fetchedImages =
           await apiService.getImages(widget.userLogin, widget.category);
       setState(() {
         images = fetchedImages;
+        isLoading = false;
       });
     } catch (e) {
       print('Failed to load images: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<MyImage?> loadSingleImage(String imageId) async {
+    try {
+      MyImage? image =
+          await apiService.getImage(widget.userLogin, widget.category, imageId);
+      return image;
+    } catch (e) {
+      print('Failed to load image: $e');
+      return null;
     }
   }
 
@@ -112,29 +130,98 @@ class _ImageListViewState extends State<ImageListView> {
                         itemCount: filteredImages.length,
                         itemBuilder: (context, index) {
                           var image = filteredImages[index];
-                          return ListTile(
-                            title: Text(image.filename),
-                            // ignore: unnecessary_null_comparison
-                            subtitle: image.data != null
-                                ? Image.memory(base64Decode(image.data))
-                                : null,
-                            onTap: () {
-                              setState(() {
-                                selectedImage = image;
-                              });
-                              showDialog(
-                                context: context,
-                                builder: (context) => SelectedImagePopupView(
-                                  selectedImage: image,
-                                  loadImages: loadImages,
-                                  onClose: () {
+                          return FutureBuilder<MyImage?>(
+                            future: apiService.getCachedImage(image.id),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return ListTile(
+                                  title: Text(image.filename),
+                                  subtitle: Center(
+                                      child: CircularProgressIndicator()),
+                                );
+                              } else if (snapshot.hasError) {
+                                return ListTile(
+                                  title: Text(image.filename),
+                                  subtitle: Text('Error loading image'),
+                                );
+                              } else if (snapshot.hasData &&
+                                  snapshot.data != null) {
+                                return ListTile(
+                                  title: Text(snapshot.data!.filename),
+                                  subtitle: Image.memory(
+                                      base64Decode(snapshot.data!.data)),
+                                  onTap: () {
                                     setState(() {
-                                      selectedImage = null;
+                                      selectedImage = snapshot.data;
                                     });
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) =>
+                                          SelectedImagePopupView(
+                                        selectedImage: snapshot.data!,
+                                        loadImages: loadImages,
+                                        onClose: () {
+                                          setState(() {
+                                            selectedImage = null;
+                                          });
+                                        },
+                                        onUpdate: updateImage,
+                                      ),
+                                    );
                                   },
-                                  onUpdate: updateImage, // Dodane
-                                ),
-                              );
+                                );
+                              } else {
+                                return FutureBuilder<MyImage?>(
+                                  future: loadSingleImage(image.id),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return ListTile(
+                                        title: Text(image.filename),
+                                        subtitle: Center(
+                                            child: CircularProgressIndicator()),
+                                      );
+                                    } else if (snapshot.hasError) {
+                                      return ListTile(
+                                        title: Text(image.filename),
+                                        subtitle: Text('Error loading image'),
+                                      );
+                                    } else if (snapshot.hasData &&
+                                        snapshot.data != null) {
+                                      return ListTile(
+                                        title: Text(snapshot.data!.filename),
+                                        subtitle: Image.memory(
+                                            base64Decode(snapshot.data!.data)),
+                                        onTap: () {
+                                          setState(() {
+                                            selectedImage = snapshot.data;
+                                          });
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) =>
+                                                SelectedImagePopupView(
+                                              selectedImage: snapshot.data!,
+                                              loadImages: loadImages,
+                                              onClose: () {
+                                                setState(() {
+                                                  selectedImage = null;
+                                                });
+                                              },
+                                              onUpdate: updateImage,
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    } else {
+                                      return ListTile(
+                                        title: Text(image.filename),
+                                        subtitle: Text('Image not found'),
+                                      );
+                                    }
+                                  },
+                                );
+                              }
                             },
                           );
                         },
