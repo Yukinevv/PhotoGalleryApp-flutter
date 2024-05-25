@@ -11,6 +11,7 @@ class SelectedImagePopupView extends StatefulWidget {
   final VoidCallback onClose;
   final Function(MyImage) onUpdate; // Dodane
   final String category; // Dodane
+  final String userLogin; // Dodane
 
   const SelectedImagePopupView({
     Key? key,
@@ -19,6 +20,7 @@ class SelectedImagePopupView extends StatefulWidget {
     required this.onClose,
     required this.onUpdate, // Dodane
     required this.category, // Dodane
+    required this.userLogin, // Dodane
   }) : super(key: key);
 
   @override
@@ -115,12 +117,12 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
 
   void _changeFilename(BuildContext context) async {
     try {
-      await apiService.changeFilename(
-          widget.selectedImage.id, _filenameController.text, widget.category);
+      await apiService.changeFilename(widget.selectedImage.id,
+          _filenameController.text, widget.userLogin, widget.category);
       setState(() {
         widget.selectedImage.filename = _filenameController.text;
       });
-      widget.onUpdate(widget.selectedImage); // Dodane
+      widget.onUpdate(widget.selectedImage);
       widget.loadImages();
       Navigator.of(context).pop();
     } catch (error) {
@@ -159,7 +161,8 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
 
   void _deleteImage(BuildContext context) async {
     try {
-      await apiService.deleteImage(widget.selectedImage.id, widget.category);
+      await apiService.deleteImage(
+          widget.selectedImage.id, widget.userLogin, widget.category);
       widget.loadImages();
       widget.onClose();
       Navigator.of(context).pop(); // Zamknij SelectedImagePopupView

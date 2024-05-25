@@ -11,48 +11,56 @@ import '../constants.dart';
 class ApiService {
   final int cacheLimit = 50;
 
-  Future<void> _saveImageToCache(MyImage image, String category) async {
-    await image.saveToFile(category);
+  Future<void> _saveImageToCache(
+      MyImage image, String userLogin, String category) async {
+    await image.saveToFile(userLogin, category);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-        'image_filename_${category}_${image.id}', image.filename);
-    await prefs.setString('image_data_${category}_${image.id}', image.data);
+        'image_filename_${userLogin}_${category}_${image.id}', image.filename);
+    await prefs.setString(
+        'image_data_${userLogin}_${category}_${image.id}', image.data);
   }
 
-  Future<void> _deleteImageFromCache(String imageId, String category) async {
-    final image = await MyImage.loadFromFile(imageId, category);
+  Future<void> _deleteImageFromCache(
+      String imageId, String userLogin, String category) async {
+    final image = await MyImage.loadFromFile(imageId, userLogin, category);
     if (image != null) {
-      await image.deleteFile(category);
+      await image.deleteFile(userLogin, category);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('image_filename_${category}_${imageId}');
-      await prefs.remove('image_data_${category}_${imageId}');
+      await prefs.remove('image_filename_${userLogin}_${category}_${imageId}');
+      await prefs.remove('image_data_${userLogin}_${category}_${imageId}');
     }
   }
 
-  Future<void> _addImageToCacheList(MyImage image, String category) async {
+  Future<void> _addImageToCacheList(
+      MyImage image, String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
     List<String> cachedImages =
-        prefs.getStringList('cachedImages_$category') ?? [];
+        prefs.getStringList('cachedImages_${userLogin}_$category') ?? [];
 
     if (cachedImages.length >= cacheLimit) {
       final imageIdToRemove = cachedImages.removeAt(0);
-      await _deleteImageFromCache(imageIdToRemove, category);
+      await _deleteImageFromCache(imageIdToRemove, userLogin, category);
     }
 
     cachedImages.add(image.id);
-    await prefs.setStringList('cachedImages_$category', cachedImages);
-    await _saveImageToCache(image, category);
+    await prefs.setStringList(
+        'cachedImages_${userLogin}_$category', cachedImages);
+    await _saveImageToCache(image, userLogin, category);
   }
 
-  Future<List<MyImage>> getCachedImages(String category) async {
+  Future<List<MyImage>> getCachedImages(
+      String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
     List<String> cachedImages =
-        prefs.getStringList('cachedImages_$category') ?? [];
+        prefs.getStringList('cachedImages_${userLogin}_$category') ?? [];
     List<MyImage> images = [];
 
     for (String imageId in cachedImages) {
-      final filename = prefs.getString('image_filename_${category}_${imageId}');
-      final data = prefs.getString('image_data_${category}_${imageId}');
+      final filename =
+          prefs.getString('image_filename_${userLogin}_${category}_${imageId}');
+      final data =
+          prefs.getString('image_data_${userLogin}_${category}_${imageId}');
       if (filename != null && data != null) {
         images.add(MyImage(id: imageId, filename: filename, data: data));
       }
@@ -90,7 +98,7 @@ class ApiService {
             data.map((item) => MyImage.fromJson(item)).toList();
 
         for (MyImage image in images) {
-          await _addImageToCacheList(image, category);
+          await _addImageToCacheList(image, userLogin, category);
         }
 
         return images;
@@ -102,28 +110,33 @@ class ApiService {
     }
   }
 
-  Future<MyImage?> getCachedImage(String imageId, String category) async {
+  Future<MyImage?> getCachedImage(
+      String imageId, String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
-    final filename = prefs.getString('image_filename_${category}_${imageId}');
-    final data = prefs.getString('image_data_${category}_${imageId}');
+    final filename =
+        prefs.getString('image_filename_${userLogin}_${category}_${imageId}');
+    final data =
+        prefs.getString('image_data_${userLogin}_${category}_${imageId}');
     if (filename != null && data != null) {
       return MyImage(id: imageId, filename: filename, data: data);
     }
     return null;
   }
 
-  Future<void> deleteImage(String imageId, String category) async {
+  Future<void> deleteImage(
+      String imageId, String userLogin, String category) async {
     final url = Uri.parse('$apiUrl/images/delete/$imageId');
 
     try {
       final response = await http.delete(url);
       if (response.statusCode == 200) {
-        await _deleteImageFromCache(imageId, category);
+        await _deleteImageFromCache(imageId, userLogin, category);
         final prefs = await SharedPreferences.getInstance();
         List<String> cachedImages =
-            prefs.getStringList('cachedImages_$category') ?? [];
+            prefs.getStringList('cachedImages_${userLogin}_$category') ?? [];
         cachedImages.remove(imageId);
-        await prefs.setStringList('cachedImages_$category', cachedImages);
+        await prefs.setStringList(
+            'cachedImages_${userLogin}_$category', cachedImages);
       } else {
         throw Exception('HTTP Error: ${response.statusCode}');
       }
@@ -142,7 +155,7 @@ class ApiService {
             data.map((item) => MyImage.fromJson(item)).toList();
 
         for (MyImage image in images) {
-          await _addImageToCacheList(image, category);
+          await _addImageToCacheList(image, userLogin, category);
         }
 
         return images;
@@ -150,23 +163,24 @@ class ApiService {
         throw Exception('Failed to load images');
       }
     } catch (e) {
-      return await getCachedImages(category);
+      return await getCachedImages(userLogin, category);
     }
   }
 
-  Future<void> changeFilename(
-      String imageId, String newFilename, String category) async {
+  Future<void> changeFilename(String imageId, String newFilename,
+      String userLogin, String category) async {
     final url = Uri.parse('$apiUrl/images/editFilename/$imageId/$newFilename');
 
     try {
       final response = await http.put(url);
       if (response.statusCode == 200) {
         final prefs = await SharedPreferences.getInstance();
-        final imageData = prefs.getString('image_data_${category}_${imageId}');
+        final imageData =
+            prefs.getString('image_data_${userLogin}_${category}_${imageId}');
         if (imageData != null) {
           MyImage image =
               MyImage(id: imageId, filename: newFilename, data: imageData);
-          await _saveImageToCache(image, category);
+          await _saveImageToCache(image, userLogin, category);
         }
       } else {
         throw Exception('HTTP Error: ${response.statusCode}');
@@ -204,8 +218,8 @@ class ApiService {
             data: base64Encode(await file.readAsBytes()),
           );
 
-          await _addImageToCacheList(image, category);
-          addImage(image); // Dodane
+          await _addImageToCacheList(image, userLogin, category);
+          addImage(image);
         } else {
           throw Exception('Hash mismatch');
         }
@@ -252,7 +266,7 @@ class ApiService {
 
   Future<MyImage?> getImage(
       String userLogin, String category, String imageId) async {
-    MyImage? cachedImage = await getCachedImage(imageId, category);
+    MyImage? cachedImage = await getCachedImage(imageId, userLogin, category);
     if (cachedImage != null) {
       return cachedImage;
     }
@@ -264,15 +278,13 @@ class ApiService {
         Map<String, dynamic> data = jsonDecode(response.body);
         MyImage image = MyImage.fromJson(data);
 
-        // Save image to cache
-        await _addImageToCacheList(image, category);
+        await _addImageToCacheList(image, userLogin, category);
 
         return image;
       } else {
         throw Exception('Failed to load image');
       }
     } catch (e) {
-      // On failure, return null
       return null;
     }
   }

@@ -30,25 +30,27 @@ class MyImage {
 
   String get imageUrl => data;
 
-  Future<void> saveToFile(String category) async {
+  Future<void> saveToFile(String userLogin, String category) async {
     final directory = await getApplicationDocumentsDirectory();
     final path = directory.path;
-    final file = File('$path/${category}_$id.jpg');
+    final file = File('$path/${userLogin}_${category}_$id.jpg');
     await file.writeAsBytes(base64Decode(data));
   }
 
-  static Future<MyImage?> loadFromFile(String id, String category) async {
+  static Future<MyImage?> loadFromFile(
+      String id, String userLogin, String category) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final path = directory.path;
-      final file = File('$path/${category}_$id.jpg');
+      final file = File('$path/${userLogin}_${category}_$id.jpg');
 
       if (file.existsSync()) {
         final bytes = await file.readAsBytes();
         final data = base64Encode(bytes);
         final prefs = await SharedPreferences.getInstance();
         final filename =
-            prefs.getString('image_filename_${category}_$id') ?? 'unknown';
+            prefs.getString('image_filename_${userLogin}_${category}_$id') ??
+                'unknown';
         return MyImage(id: id, filename: filename, data: data);
       }
     } catch (e) {
@@ -57,10 +59,10 @@ class MyImage {
     return null;
   }
 
-  Future<void> deleteFile(String category) async {
+  Future<void> deleteFile(String userLogin, String category) async {
     final directory = await getApplicationDocumentsDirectory();
     final path = directory.path;
-    final file = File('$path/${category}_$id.jpg');
+    final file = File('$path/${userLogin}_${category}_$id.jpg');
     if (file.existsSync()) {
       await file.delete();
     }

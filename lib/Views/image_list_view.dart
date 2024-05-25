@@ -40,7 +40,8 @@ class _ImageListViewState extends State<ImageListView> {
     setState(() {
       isLoading = true;
     });
-    List<MyImage> cachedImages = await apiService.getCachedImages(category);
+    List<MyImage> cachedImages =
+        await apiService.getCachedImages(widget.userLogin, category);
     if (cachedImages.isEmpty) {
       await loadImages();
     } else {
@@ -195,6 +196,7 @@ class _ImageListViewState extends State<ImageListView> {
                                       },
                                       onUpdate: updateImage,
                                       category: category,
+                                      userLogin: widget.userLogin, // Dodane
                                     ),
                                   );
                                 },
@@ -217,7 +219,7 @@ class _ImageListViewState extends State<ImageListView> {
               closeSheet: () {
                 Navigator.pop(context);
               },
-              addImage: addImage, // Dodane
+              addImage: addImage,
             ),
           );
         },
