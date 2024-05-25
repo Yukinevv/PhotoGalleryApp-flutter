@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:photogalleryapp/Extensions/string_extension.dart';
 
 import '../Models/MyImage.dart';
 import '../Services/ApiService.dart';
@@ -26,11 +27,30 @@ class _ImageListViewState extends State<ImageListView> {
   ValueNotifier<String> filterField = ValueNotifier<String>("");
   final ApiService apiService = ApiService();
   bool isLoading = false;
+  late final String category; // Dodane
 
   @override
   void initState() {
     super.initState();
-    loadImages();
+    category = widget.category.replacePolishCharacters(); // Dodane
+    _initializeImages();
+  }
+
+  Future<void> _initializeImages() async {
+    setState(() {
+      isLoading = true;
+    });
+    List<MyImage> cachedImages =
+        await apiService.getCachedImages(category); // Zmienione
+    if (cachedImages.isEmpty) {
+      await loadImages();
+    } else {
+      setState(() {
+        images = cachedImages;
+        isLoading = false;
+      });
+      await loadImageIds();
+    }
   }
 
   Future<void> loadImages() async {
@@ -39,7 +59,7 @@ class _ImageListViewState extends State<ImageListView> {
     });
     try {
       List<MyImage> fetchedImages =
-          await apiService.getImages(widget.userLogin, widget.category);
+          await apiService.getImages(widget.userLogin, category); // Zmienione
       setState(() {
         images = fetchedImages;
         isLoading = false;
@@ -52,14 +72,31 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
-  Future<MyImage?> loadSingleImage(String imageId) async {
+  Future<void> loadImageIds() async {
     try {
-      MyImage? image =
-          await apiService.getImage(widget.userLogin, widget.category, imageId);
-      return image;
+      List<String> imageIds = await apiService.getImagesIds(
+          widget.userLogin, category); // Zmienione
+      List<String> cachedImageIds = images.map((image) => image.id).toList();
+      List<String> missingImageIds =
+          imageIds.where((id) => !cachedImageIds.contains(id)).toList();
+
+      if (missingImageIds.isNotEmpty) {
+        await loadMissingImages(missingImageIds);
+      }
     } catch (e) {
-      print('Failed to load image: $e');
-      return null;
+      print('Failed to load image IDs: $e');
+    }
+  }
+
+  Future<void> loadMissingImages(List<String> missingImageIds) async {
+    try {
+      List<MyImage> missingImages = await apiService.getImagesByIds(
+          widget.userLogin, category, missingImageIds); // Zmienione
+      setState(() {
+        images.addAll(missingImages);
+      });
+    } catch (e) {
+      print('Failed to load missing images: $e');
     }
   }
 
@@ -119,115 +156,48 @@ class _ImageListViewState extends State<ImageListView> {
             loadImages: loadImages,
           ),
           Expanded(
-            child: images.isEmpty
-                ? const Center(
-                    child: Text("Nie wstawiono jeszcze żadnego obrazu..."))
-                : ValueListenableBuilder<String>(
-                    valueListenable: filterField,
-                    builder: (context, value, child) {
-                      var filteredImages = getFilteredImages();
-                      return ListView.builder(
-                        itemCount: filteredImages.length,
-                        itemBuilder: (context, index) {
-                          var image = filteredImages[index];
-                          return FutureBuilder<MyImage?>(
-                            future: apiService.getCachedImage(image.id),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return ListTile(
-                                  title: Text(image.filename),
-                                  subtitle: Center(
-                                      child: CircularProgressIndicator()),
-                                );
-                              } else if (snapshot.hasError) {
-                                return ListTile(
-                                  title: Text(image.filename),
-                                  subtitle: Text('Error loading image'),
-                                );
-                              } else if (snapshot.hasData &&
-                                  snapshot.data != null) {
-                                return ListTile(
-                                  title: Text(snapshot.data!.filename),
-                                  subtitle: Image.memory(
-                                      base64Decode(snapshot.data!.data)),
-                                  onTap: () {
-                                    setState(() {
-                                      selectedImage = snapshot.data;
-                                    });
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) =>
-                                          SelectedImagePopupView(
-                                        selectedImage: snapshot.data!,
-                                        loadImages: loadImages,
-                                        onClose: () {
-                                          setState(() {
-                                            selectedImage = null;
-                                          });
-                                        },
-                                        onUpdate: updateImage,
-                                      ),
-                                    );
-                                  },
-                                );
-                              } else {
-                                return FutureBuilder<MyImage?>(
-                                  future: loadSingleImage(image.id),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return ListTile(
-                                        title: Text(image.filename),
-                                        subtitle: Center(
-                                            child: CircularProgressIndicator()),
-                                      );
-                                    } else if (snapshot.hasError) {
-                                      return ListTile(
-                                        title: Text(image.filename),
-                                        subtitle: Text('Error loading image'),
-                                      );
-                                    } else if (snapshot.hasData &&
-                                        snapshot.data != null) {
-                                      return ListTile(
-                                        title: Text(snapshot.data!.filename),
-                                        subtitle: Image.memory(
-                                            base64Decode(snapshot.data!.data)),
-                                        onTap: () {
-                                          setState(() {
-                                            selectedImage = snapshot.data;
-                                          });
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) =>
-                                                SelectedImagePopupView(
-                                              selectedImage: snapshot.data!,
-                                              loadImages: loadImages,
-                                              onClose: () {
-                                                setState(() {
-                                                  selectedImage = null;
-                                                });
-                                              },
-                                              onUpdate: updateImage,
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    } else {
-                                      return ListTile(
-                                        title: Text(image.filename),
-                                        subtitle: Text('Image not found'),
-                                      );
-                                    }
-                                  },
-                                );
-                              }
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : images.isEmpty
+                    ? const Center(
+                        child: Text("Nie wstawiono jeszcze żadnego obrazu..."))
+                    : ValueListenableBuilder<String>(
+                        valueListenable: filterField,
+                        builder: (context, value, child) {
+                          var filteredImages = getFilteredImages();
+                          return ListView.builder(
+                            itemCount: filteredImages.length,
+                            itemBuilder: (context, index) {
+                              var image = filteredImages[index];
+                              return ListTile(
+                                title: Text(image.filename),
+                                subtitle:
+                                    Image.memory(base64Decode(image.data)),
+                                onTap: () {
+                                  setState(() {
+                                    selectedImage = image;
+                                  });
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) =>
+                                        SelectedImagePopupView(
+                                      selectedImage: image,
+                                      loadImages: loadImages,
+                                      onClose: () {
+                                        setState(() {
+                                          selectedImage = null;
+                                        });
+                                      },
+                                      onUpdate: updateImage,
+                                      category: category, // Dodane
+                                    ),
+                                  );
+                                },
+                              );
                             },
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
           ),
         ],
       ),
@@ -241,7 +211,7 @@ class _ImageListViewState extends State<ImageListView> {
               category: widget.category,
               closeSheet: () {
                 Navigator.pop(context);
-                loadImages();
+                _initializeImages();
               },
               loadImages: loadImages,
             ),
