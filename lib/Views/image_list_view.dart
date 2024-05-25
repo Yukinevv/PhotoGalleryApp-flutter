@@ -27,12 +27,12 @@ class _ImageListViewState extends State<ImageListView> {
   ValueNotifier<String> filterField = ValueNotifier<String>("");
   final ApiService apiService = ApiService();
   bool isLoading = false;
-  late final String category; // Dodane
+  late final String category;
 
   @override
   void initState() {
     super.initState();
-    category = widget.category.replacePolishCharacters(); // Dodane
+    category = widget.category.replacePolishCharacters();
     _initializeImages();
   }
 
@@ -40,8 +40,7 @@ class _ImageListViewState extends State<ImageListView> {
     setState(() {
       isLoading = true;
     });
-    List<MyImage> cachedImages =
-        await apiService.getCachedImages(category); // Zmienione
+    List<MyImage> cachedImages = await apiService.getCachedImages(category);
     if (cachedImages.isEmpty) {
       await loadImages();
     } else {
@@ -59,7 +58,7 @@ class _ImageListViewState extends State<ImageListView> {
     });
     try {
       List<MyImage> fetchedImages =
-          await apiService.getImages(widget.userLogin, category); // Zmienione
+          await apiService.getImages(widget.userLogin, category);
       setState(() {
         images = fetchedImages;
         isLoading = false;
@@ -74,8 +73,8 @@ class _ImageListViewState extends State<ImageListView> {
 
   Future<void> loadImageIds() async {
     try {
-      List<String> imageIds = await apiService.getImagesIds(
-          widget.userLogin, category); // Zmienione
+      List<String> imageIds =
+          await apiService.getImagesIds(widget.userLogin, category);
       List<String> cachedImageIds = images.map((image) => image.id).toList();
       List<String> missingImageIds =
           imageIds.where((id) => !cachedImageIds.contains(id)).toList();
@@ -91,7 +90,7 @@ class _ImageListViewState extends State<ImageListView> {
   Future<void> loadMissingImages(List<String> missingImageIds) async {
     try {
       List<MyImage> missingImages = await apiService.getImagesByIds(
-          widget.userLogin, category, missingImageIds); // Zmienione
+          widget.userLogin, category, missingImageIds);
       setState(() {
         images.addAll(missingImages);
       });
@@ -133,6 +132,12 @@ class _ImageListViewState extends State<ImageListView> {
     });
   }
 
+  void addImage(MyImage newImage) {
+    setState(() {
+      images.add(newImage);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,7 +158,7 @@ class _ImageListViewState extends State<ImageListView> {
             filteredImagesCount: getFilteredImages().length,
             filterField: filterField,
             sortByName: sortByName,
-            loadImages: loadImages,
+            addImage: addImage,
           ),
           Expanded(
             child: isLoading
@@ -189,7 +194,7 @@ class _ImageListViewState extends State<ImageListView> {
                                         });
                                       },
                                       onUpdate: updateImage,
-                                      category: category, // Dodane
+                                      category: category,
                                     ),
                                   );
                                 },
@@ -208,12 +213,11 @@ class _ImageListViewState extends State<ImageListView> {
             isScrollControlled: true,
             builder: (context) => FileUploadView(
               userLogin: widget.userLogin,
-              category: widget.category,
+              category: category,
               closeSheet: () {
                 Navigator.pop(context);
-                _initializeImages();
               },
-              loadImages: loadImages,
+              addImage: addImage, // Dodane
             ),
           );
         },

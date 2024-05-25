@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'file_upload_view.dart'; // Zakładając, że FileUploadView jest już zaimplementowany
+import '../Models/MyImage.dart'; // Dodane
 
 class FiltersView extends StatefulWidget {
   final String userLogin;
@@ -7,7 +8,7 @@ class FiltersView extends StatefulWidget {
   final int filteredImagesCount;
   final ValueNotifier<String> filterField;
   final Function(bool) sortByName;
-  final VoidCallback loadImages;
+  final Function(MyImage) addImage; // Zmienione
 
   const FiltersView({
     Key? key,
@@ -16,7 +17,7 @@ class FiltersView extends StatefulWidget {
     required this.filteredImagesCount,
     required this.filterField,
     required this.sortByName,
-    required this.loadImages,
+    required this.addImage, // Zmienione
   }) : super(key: key);
 
   @override
@@ -45,7 +46,6 @@ class _FiltersViewState extends State<FiltersView> {
                       ),
                       onChanged: (value) {
                         widget.filterField.value = value;
-                        widget.loadImages();
                       },
                       autocorrect: false,
                     );
@@ -85,9 +85,8 @@ class _FiltersViewState extends State<FiltersView> {
                         category: widget.category,
                         closeSheet: () {
                           setState(() => isSheetPresented = false);
-                          widget.loadImages();
                         },
-                        loadImages: () {},
+                        addImage: widget.addImage, // Zmienione
                       ),
                     );
                   }

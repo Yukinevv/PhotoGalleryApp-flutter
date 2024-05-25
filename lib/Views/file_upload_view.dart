@@ -1,28 +1,27 @@
-import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
-import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart';
-import 'package:photogalleryapp/Extensions/string_extension.dart';
-import 'package:photogalleryapp/constants.dart';
+import 'package:photogalleryapp/Models/MyImage.dart';
+
 import '../Services/ApiService.dart';
 
 class FileUploadView extends StatefulWidget {
   final String userLogin;
   final String category;
   final VoidCallback closeSheet;
-  final VoidCallback loadImages;
+  final Function(MyImage) addImage; // Dodane
 
   const FileUploadView({
     Key? key,
     required this.userLogin,
     required this.category,
     required this.closeSheet,
-    required this.loadImages,
+    required this.addImage, // Dodane
   }) : super(key: key);
 
   @override
@@ -192,31 +191,10 @@ class _FileUploadViewState extends State<FileUploadView> {
       return;
     }
 
-    String category = widget.category.replacePolishCharacters();
-
-    String url = "$apiUrl/images/upload/${widget.userLogin}/$category";
-
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(url))
-        ..headers['Content-Type'] = 'multipart/form-data'
-        ..files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            selectedFile!.path,
-            contentType: MediaType.parse(lookupMimeType(selectedFile!.path)!),
-          ),
-        );
-
-      var response = await request.send();
-
-      if (response.statusCode == 200) {
-        widget.loadImages();
-        widget.closeSheet();
-      } else {
-        setState(() {
-          errorMessage = "Failed to upload image: ${response.statusCode}";
-        });
-      }
+      await apiService.uploadImage(
+          selectedFile!, widget.userLogin, widget.category, widget.addImage);
+      widget.closeSheet();
     } catch (e) {
       setState(() {
         errorMessage = "Image upload failed: $e";

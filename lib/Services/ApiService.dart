@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -168,6 +170,47 @@ class ApiService {
         }
       } else {
         throw Exception('HTTP Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Network error: $error');
+    }
+  }
+
+  Future<String> calculateSha512(File file) async {
+    final bytes = await file.readAsBytes();
+    return sha512.convert(bytes).toString();
+  }
+
+  Future<void> uploadImage(File file, String userLogin, String category,
+      Function(MyImage) addImage) async {
+    final url = Uri.parse('$apiUrl/images/upload/$userLogin/$category');
+
+    final request = http.MultipartRequest('POST', url);
+    request.files.add(await http.MultipartFile.fromPath('image', file.path));
+
+    try {
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final responseData = jsonDecode(responseBody);
+        final serverHash = responseData['hash'];
+        final imageId = responseData['id'];
+        final localHash = await calculateSha512(file);
+
+        if (serverHash == localHash) {
+          final image = MyImage(
+            id: imageId,
+            filename: file.path.split('/').last,
+            data: base64Encode(await file.readAsBytes()),
+          );
+
+          await _addImageToCacheList(image, category);
+          addImage(image); // Dodane
+        } else {
+          throw Exception('Hash mismatch');
+        }
+      } else {
+        throw Exception('Failed to upload image');
       }
     } catch (error) {
       throw Exception('Network error: $error');
