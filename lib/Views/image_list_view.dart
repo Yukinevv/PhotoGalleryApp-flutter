@@ -100,12 +100,18 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
-  void updateImage(MyImage updatedImage) {
+  void updateImage(MyImage updatedImage, String oldImageId) {
     setState(() {
-      final index = images.indexWhere((image) => image.id == updatedImage.id);
+      final index = images.indexWhere((image) => image.id == oldImageId);
       if (index != -1) {
         images[index] = updatedImage;
       }
+    });
+  }
+
+  void removeImage(String imageId) {
+    setState(() {
+      images.removeWhere((image) => image.id == imageId);
     });
   }
 
@@ -188,13 +194,14 @@ class _ImageListViewState extends State<ImageListView> {
                                     builder: (context) =>
                                         SelectedImagePopupView(
                                       selectedImage: image,
-                                      loadImages: loadImages,
                                       onClose: () {
                                         setState(() {
                                           selectedImage = null;
                                         });
                                       },
-                                      onUpdate: updateImage,
+                                      onUpdate: (updatedImage, oldImageId) =>
+                                          updateImage(updatedImage, oldImageId),
+                                      onDelete: removeImage,
                                       category: category,
                                       userLogin: widget.userLogin, // Dodane
                                     ),

@@ -36,7 +36,7 @@ class ApiService {
       MyImage image, String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
     List<String> cachedImages =
-        prefs.getStringList('cachedImages_${userLogin}_$category') ?? [];
+        prefs.getStringList('cachedImages_${userLogin}_${category}') ?? [];
 
     if (cachedImages.length >= cacheLimit) {
       final imageIdToRemove = cachedImages.removeAt(0);
@@ -45,7 +45,7 @@ class ApiService {
 
     cachedImages.add(image.id);
     await prefs.setStringList(
-        'cachedImages_${userLogin}_$category', cachedImages);
+        'cachedImages_${userLogin}_${category}', cachedImages);
     await _saveImageToCache(image, userLogin, category);
   }
 
@@ -53,7 +53,7 @@ class ApiService {
       String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
     List<String> cachedImages =
-        prefs.getStringList('cachedImages_${userLogin}_$category') ?? [];
+        prefs.getStringList('cachedImages_${userLogin}_${category}') ?? [];
     List<MyImage> images = [];
 
     for (String imageId in cachedImages) {
@@ -130,13 +130,25 @@ class ApiService {
     try {
       final response = await http.delete(url);
       if (response.statusCode == 200) {
-        await _deleteImageFromCache(imageId, userLogin, category);
-        final prefs = await SharedPreferences.getInstance();
-        List<String> cachedImages =
-            prefs.getStringList('cachedImages_${userLogin}_$category') ?? [];
-        cachedImages.remove(imageId);
-        await prefs.setStringList(
-            'cachedImages_${userLogin}_$category', cachedImages);
+        final responseBody = response.body;
+        final responseData = jsonDecode(responseBody);
+        final serverHash = responseData['hash'];
+        final image = await getCachedImage(imageId, userLogin, category);
+        if (image != null) {
+          final localHash = await calculateSha512(image.data);
+          if (serverHash == localHash) {
+            await _deleteImageFromCache(imageId, userLogin, category);
+            final prefs = await SharedPreferences.getInstance();
+            List<String> cachedImages =
+                prefs.getStringList('cachedImages_${userLogin}_${category}') ??
+                    [];
+            cachedImages.remove(imageId);
+            await prefs.setStringList(
+                'cachedImages_${userLogin}_${category}', cachedImages);
+          } else {
+            throw Exception('Hash mismatch');
+          }
+        }
       } else {
         throw Exception('HTTP Error: ${response.statusCode}');
       }
@@ -167,20 +179,34 @@ class ApiService {
     }
   }
 
-  Future<void> changeFilename(String imageId, String newFilename,
+  Future<String> changeFilename(String imageId, String newFilename,
       String userLogin, String category) async {
     final url = Uri.parse('$apiUrl/images/editFilename/$imageId/$newFilename');
 
     try {
       final response = await http.put(url);
       if (response.statusCode == 200) {
-        final prefs = await SharedPreferences.getInstance();
-        final imageData =
-            prefs.getString('image_data_${userLogin}_${category}_${imageId}');
+        final responseBody = response.body;
+        final responseData = jsonDecode(responseBody);
+        final serverHash = responseData['hash'];
+        final newImageId = responseData['id']; // Nowe ID zdjęcia
+        final imageData = await getCachedImage(imageId, userLogin, category);
         if (imageData != null) {
-          MyImage image =
-              MyImage(id: imageId, filename: newFilename, data: imageData);
-          await _saveImageToCache(image, userLogin, category);
+          final localHash = await calculateSha512(imageData.data);
+          if (serverHash == localHash) {
+            MyImage updatedImage = MyImage(
+              id: newImageId, // Zaktualizowane ID
+              filename: newFilename,
+              data: imageData.data,
+            );
+            await _deleteImageFromCache(
+                imageId, userLogin, category); // Usuń stare ID z cache
+            await _addImageToCacheList(
+                updatedImage, userLogin, category); // Dodaj nowe ID do cache
+            return newImageId; // Zwróć nowe ID
+          } else {
+            throw Exception('Hash mismatch');
+          }
         }
       } else {
         throw Exception('HTTP Error: ${response.statusCode}');
@@ -188,11 +214,11 @@ class ApiService {
     } catch (error) {
       throw Exception('Network error: $error');
     }
+    return imageId; // W razie niepowodzenia zwróć stare ID
   }
 
-  Future<String> calculateSha512(File file) async {
-    final bytes = await file.readAsBytes();
-    return sha512.convert(bytes).toString();
+  Future<String> calculateSha512(String data) async {
+    return sha512.convert(base64Decode(data)).toString();
   }
 
   Future<void> uploadImage(File file, String userLogin, String category,
@@ -203,13 +229,14 @@ class ApiService {
     request.files.add(await http.MultipartFile.fromPath('image', file.path));
 
     try {
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
+      final streamedResponse = await request.send();
+      if (streamedResponse.statusCode == 200) {
+        final responseBody = await streamedResponse.stream.bytesToString();
         final responseData = jsonDecode(responseBody);
         final serverHash = responseData['hash'];
         final imageId = responseData['id'];
-        final localHash = await calculateSha512(file);
+        final localHash =
+            await calculateSha512(base64Encode(await file.readAsBytes()));
 
         if (serverHash == localHash) {
           final image = MyImage(
@@ -278,6 +305,7 @@ class ApiService {
         Map<String, dynamic> data = jsonDecode(response.body);
         MyImage image = MyImage.fromJson(data);
 
+        // Save image to cache
         await _addImageToCacheList(image, userLogin, category);
 
         return image;
@@ -285,6 +313,7 @@ class ApiService {
         throw Exception('Failed to load image');
       }
     } catch (e) {
+      // On failure, return null
       return null;
     }
   }

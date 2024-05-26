@@ -7,20 +7,20 @@ import '../Services/ApiService.dart';
 
 class SelectedImagePopupView extends StatefulWidget {
   final MyImage selectedImage;
-  final VoidCallback loadImages;
   final VoidCallback onClose;
-  final Function(MyImage) onUpdate; // Dodane
-  final String category; // Dodane
-  final String userLogin; // Dodane
+  final Function(MyImage, String) onUpdate; // Zaktualizowane
+  final Function(String) onDelete;
+  final String category;
+  final String userLogin;
 
   const SelectedImagePopupView({
     Key? key,
     required this.selectedImage,
-    required this.loadImages,
     required this.onClose,
-    required this.onUpdate, // Dodane
-    required this.category, // Dodane
-    required this.userLogin, // Dodane
+    required this.onUpdate, // Zaktualizowane
+    required this.onDelete,
+    required this.category,
+    required this.userLogin,
   }) : super(key: key);
 
   @override
@@ -45,8 +45,9 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(viewInsets: EdgeInsets.zero),
           child: AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Text("Podaj nazwę zdjęcia:"),
             content: SingleChildScrollView(
               child: Column(
@@ -117,18 +118,24 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
 
   void _changeFilename(BuildContext context) async {
     try {
-      await apiService.changeFilename(widget.selectedImage.id,
-          _filenameController.text, widget.userLogin, widget.category);
-      setState(() {
-        widget.selectedImage.filename = _filenameController.text;
-      });
-      widget.onUpdate(widget.selectedImage);
-      widget.loadImages();
+      final newImageId = await apiService.changeFilename(
+        widget.selectedImage.id,
+        _filenameController.text,
+        widget.userLogin,
+        widget.category,
+      );
+      final newImage = MyImage(
+        id: newImageId, // Nowe ID zdjęcia
+        filename: _filenameController.text,
+        data: widget.selectedImage.data,
+      );
+      widget.onUpdate(
+          newImage, widget.selectedImage.id); // Przekazanie nowego i starego ID
       Navigator.of(context).pop();
     } catch (error) {
-      // setState(() {
-      //   errorMessage = "Błąd zmiany nazwy pliku: $error";
-      // });
+      setState(() {
+        errorMessage = "Błąd zmiany nazwy pliku: $error";
+      });
     }
   }
 
@@ -163,7 +170,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     try {
       await apiService.deleteImage(
           widget.selectedImage.id, widget.userLogin, widget.category);
-      widget.loadImages();
+      widget.onDelete(widget.selectedImage.id);
       widget.onClose();
       Navigator.of(context).pop(); // Zamknij SelectedImagePopupView
 
@@ -185,9 +192,9 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
         },
       );
     } catch (error) {
-      // setState(() {
-      //   errorMessage = "Błąd usuwania obrazu: $error";
-      // });
+      setState(() {
+        errorMessage = "Błąd usuwania obrazu: $error";
+      });
     }
   }
 }
