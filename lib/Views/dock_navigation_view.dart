@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'category_list_view.dart'; // Zakładając, że CategoryListView jest zaimplementowany
-import 'settings_view.dart'; // Zakładając, że SettingsView jest zaimplementowany
+import 'category_list_view.dart';
+import 'settings_view.dart';
 
 class DockNavigationView extends StatefulWidget {
   final ValueNotifier<bool> isLoggedIn;

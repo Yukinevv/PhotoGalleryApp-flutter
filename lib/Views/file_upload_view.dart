@@ -14,14 +14,14 @@ class FileUploadView extends StatefulWidget {
   final String userLogin;
   final String category;
   final VoidCallback closeSheet;
-  final Function(MyImage) addImage; // Dodane
+  final Function(MyImage) addImage;
 
   const FileUploadView({
     Key? key,
     required this.userLogin,
     required this.category,
     required this.closeSheet,
-    required this.addImage, // Dodane
+    required this.addImage,
   }) : super(key: key);
 
   @override

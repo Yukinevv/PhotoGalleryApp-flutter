@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:photogalleryapp/Models/User.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Services/ApiService.dart';
-import 'register_form_view.dart'; // Zakładając, że już istnieje plik z widokiem rejestracji
-import 'dock_navigation_view.dart'; // Import DockNavigationView
+import 'register_form_view.dart';
+import 'dock_navigation_view.dart';
 
 class LoginFormView extends StatefulWidget {
   const LoginFormView(

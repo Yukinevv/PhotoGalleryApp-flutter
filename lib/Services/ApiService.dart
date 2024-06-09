@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
+import 'package:photogalleryapp/Models/User.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Models/MyImage.dart';
@@ -258,7 +259,7 @@ class ApiService {
     }
   }
 
-  // rejestracja
+  // Rejestracja
   Future<void> createUser(User user) async {
     final url = Uri.parse('$apiUrl/users/add');
     final headers = {'Content-Type': 'application/json'};
@@ -282,7 +283,7 @@ class ApiService {
     try {
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
-        // Handle login success
+        // Logowanie się powiodło
       } else {
         throw Exception('HTTP Error: ${response.statusCode}');
       }
@@ -305,7 +306,7 @@ class ApiService {
         Map<String, dynamic> data = jsonDecode(response.body);
         MyImage image = MyImage.fromJson(data);
 
-        // Save image to cache
+        // Zapis obrazka do cache
         await _addImageToCacheList(image, userLogin, category);
 
         return image;
@@ -313,48 +314,7 @@ class ApiService {
         throw Exception('Failed to load image');
       }
     } catch (e) {
-      // On failure, return null
       return null;
     }
   }
-}
-
-class User {
-  final String login;
-  final String password;
-  final String email;
-
-  User({required this.login, required this.password, required this.email});
-
-  Map<String, dynamic> toJson() => {
-        'login': login,
-        'password': password,
-        'email': email,
-      };
-
-  factory User.fromJson(Map<String, dynamic> json) => User(
-        login: json['login'],
-        password: json['password'],
-        email: json['email'],
-      );
-}
-
-class ImageResponse {
-  final String id;
-  final String filename;
-  final String data;
-
-  ImageResponse({required this.id, required this.filename, required this.data});
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'filename': filename,
-        'data': data,
-      };
-
-  factory ImageResponse.fromJson(Map<String, dynamic> json) => ImageResponse(
-        id: json['id'],
-        filename: json['filename'],
-        data: json['data'],
-      );
 }

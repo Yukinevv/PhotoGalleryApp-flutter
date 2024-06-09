@@ -8,7 +8,7 @@ import '../Services/ApiService.dart';
 class SelectedImagePopupView extends StatefulWidget {
   final MyImage selectedImage;
   final VoidCallback onClose;
-  final Function(MyImage, String) onUpdate; // Zaktualizowane
+  final Function(MyImage, String) onUpdate;
   final Function(String) onDelete;
   final String category;
   final String userLogin;
@@ -17,7 +17,7 @@ class SelectedImagePopupView extends StatefulWidget {
     Key? key,
     required this.selectedImage,
     required this.onClose,
-    required this.onUpdate, // Zaktualizowane
+    required this.onUpdate,
     required this.onDelete,
     required this.category,
     required this.userLogin,
@@ -132,11 +132,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
       widget.onUpdate(
           newImage, widget.selectedImage.id); // Przekazanie nowego i starego ID
       Navigator.of(context).pop();
-    } catch (error) {
-      setState(() {
-        errorMessage = "Błąd zmiany nazwy pliku: $error";
-      });
-    }
+    } catch (error) {}
   }
 
   void _confirmDelete(BuildContext context) {
@@ -191,10 +187,6 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
           );
         },
       );
-    } catch (error) {
-      setState(() {
-        errorMessage = "Błąd usuwania obrazu: $error";
-      });
-    }
+    } catch (error) {}
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'image_list_view.dart'; // Zakładamy, że ImageListView jest już zaimplementowane
+import 'image_list_view.dart';
 
 class CategoryListView extends StatelessWidget {
   CategoryListView({Key? key, required this.userLogin}) : super(key: key);
