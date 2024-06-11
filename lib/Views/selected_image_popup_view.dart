@@ -5,14 +5,28 @@ import 'package:flutter/material.dart';
 import '../Models/MyImage.dart';
 import '../Services/ApiService.dart';
 
+/// Widok popup do zarządzania wybranym obrazem.
+/// Umożliwia zmianę nazwy i usunięcie obrazu.
 class SelectedImagePopupView extends StatefulWidget {
+  /// Wybrany obraz.
   final MyImage selectedImage;
+
+  /// Funkcja wywoływana po zamknięciu popupu.
   final VoidCallback onClose;
+
+  /// Funkcja wywoływana po aktualizacji obrazu.
   final Function(MyImage, String) onUpdate;
+
+  /// Funkcja wywoływana po usunięciu obrazu.
   final Function(String) onDelete;
+
+  /// Kategoria obrazu.
   final String category;
+
+  /// Login użytkownika.
   final String userLogin;
 
+  /// Konstruktor przyjmujący wymagane parametry.
   const SelectedImagePopupView({
     Key? key,
     required this.selectedImage,
@@ -27,9 +41,15 @@ class SelectedImagePopupView extends StatefulWidget {
   _SelectedImagePopupViewState createState() => _SelectedImagePopupViewState();
 }
 
+/// Stan widoku popup do zarządzania wybranym obrazem.
 class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
+  /// Kontroler tekstu dla pola nowej nazwy pliku.
   final TextEditingController _filenameController = TextEditingController();
+
+  /// Wiadomość o błędzie, wyświetlana gdy wystąpi problem z nazwą pliku.
   String errorMessage = "";
+
+  /// Instancja serwisu API do komunikacji z serwerem.
   final ApiService apiService = ApiService();
 
   @override
@@ -82,6 +102,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     );
   }
 
+  /// Wyświetla dialog potwierdzający zmianę nazwy pliku.
   void _confirmChangeFilename(BuildContext context) {
     if (_filenameController.text.isEmpty) {
       setState(() {
@@ -116,6 +137,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     );
   }
 
+  /// Zmienia nazwę pliku na serwerze i aktualizuje stan aplikacji.
   void _changeFilename(BuildContext context) async {
     try {
       final newImageId = await apiService.changeFilename(
@@ -132,9 +154,14 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
       widget.onUpdate(
           newImage, widget.selectedImage.id); // Przekazanie nowego i starego ID
       Navigator.of(context).pop();
-    } catch (error) {}
+    } catch (error) {
+      setState(() {
+        errorMessage = "Wystąpił błąd podczas zmiany nazwy!";
+      });
+    }
   }
 
+  /// Wyświetla dialog potwierdzający usunięcie pliku.
   void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
@@ -162,6 +189,7 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
     );
   }
 
+  /// Usuwa plik z serwera i aktualizuje stan aplikacji.
   void _deleteImage(BuildContext context) async {
     try {
       await apiService.deleteImage(
@@ -187,6 +215,10 @@ class _SelectedImagePopupViewState extends State<SelectedImagePopupView> {
           );
         },
       );
-    } catch (error) {}
+    } catch (error) {
+      setState(() {
+        errorMessage = "Wystąpił błąd podczas usuwania!";
+      });
+    }
   }
 }

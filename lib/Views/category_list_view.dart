@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'image_list_view.dart';
 
+/// Klasa `CategoryListView` odpowiada za wyświetlanie listy kategorii.
+/// Użytkownik może wybrać kategorię, co spowoduje przejście do widoku listy obrazów dla tej kategorii.
 class CategoryListView extends StatelessWidget {
+  /// Konstruktor przyjmuje `userLogin`, który jest loginem użytkownika.
   CategoryListView({Key? key, required this.userLogin}) : super(key: key);
 
+  /// Login użytkownika przekazywany do widoku listy obrazów.
   final String userLogin;
+
+  /// Lista kategorii dostępnych do wyboru.
   final List<String> categories = [
     "Krajobraz",
     "Zwierzęta",
@@ -19,6 +25,8 @@ class CategoryListView extends StatelessWidget {
     "Inne",
   ];
 
+  /// Metoda asynchroniczna czyszcząca pamięć podręczną aplikacji.
+  /// Wywoływana po naciśnięciu przycisku usuwania w pasku akcji.
   Future<void> clearCache() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -35,7 +43,7 @@ class CategoryListView extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.delete),
             onPressed: clearCache,
-            tooltip: "Wyczysc Cache",
+            tooltip: "Wyczyść Cache",
           ),
         ],
       ),
@@ -65,6 +73,13 @@ class CategoryListView extends StatelessWidget {
     );
   }
 
+  /// Metoda `iconForCategory` zwraca ikonę i kolor odpowiednie do kategorii.
+  ///
+  /// Parametr:
+  /// - `category`: Nazwa kategorii jako string.
+  ///
+  /// Zwraca:
+  /// - `IconInfo`: Obiekt zawierający ikonę i kolor przypisane do kategorii.
   IconInfo iconForCategory(String category) {
     switch (category) {
       case "Krajobraz":
@@ -93,9 +108,14 @@ class CategoryListView extends StatelessWidget {
   }
 }
 
+/// Klasa `IconInfo` przechowuje informacje o ikonie i jej kolorze.
 class IconInfo {
+  /// Ikona kategorii.
   final IconData icon;
+
+  /// Kolor ikony kategorii.
   final Color color;
 
+  /// Konstruktor przyjmujący ikonę i kolor.
   IconInfo(this.icon, this.color);
 }

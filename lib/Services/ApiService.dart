@@ -9,9 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Models/MyImage.dart';
 import '../constants.dart';
 
+/// Klasa `ApiService` zawiera metody do komunikacji z API i zarządzania obrazami oraz użytkownikami.
 class ApiService {
+  /// Limit obrazów przechowywanych w pamięci podręcznej.
   final int cacheLimit = 50;
 
+  /// Zapisuje obraz w pamięci podręcznej.
   Future<void> _saveImageToCache(
       MyImage image, String userLogin, String category) async {
     await image.saveToFile(userLogin, category);
@@ -22,6 +25,7 @@ class ApiService {
         'image_data_${userLogin}_${category}_${image.id}', image.data);
   }
 
+  /// Usuwa obraz z pamięci podręcznej.
   Future<void> _deleteImageFromCache(
       String imageId, String userLogin, String category) async {
     final image = await MyImage.loadFromFile(imageId, userLogin, category);
@@ -33,6 +37,7 @@ class ApiService {
     }
   }
 
+  /// Dodaje obraz do listy obrazów w pamięci podręcznej.
   Future<void> _addImageToCacheList(
       MyImage image, String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
@@ -50,6 +55,7 @@ class ApiService {
     await _saveImageToCache(image, userLogin, category);
   }
 
+  /// Pobiera obrazy z pamięci podręcznej.
   Future<List<MyImage>> getCachedImages(
       String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
@@ -70,6 +76,7 @@ class ApiService {
     return images;
   }
 
+  /// Pobiera identyfikatory obrazów z serwera.
   Future<List<String>> getImagesIds(String userLogin, String category) async {
     try {
       final response =
@@ -85,6 +92,7 @@ class ApiService {
     }
   }
 
+  /// Pobiera obrazy z serwera na podstawie ich identyfikatorów.
   Future<List<MyImage>> getImagesByIds(
       String userLogin, String category, List<String> ids) async {
     try {
@@ -111,6 +119,7 @@ class ApiService {
     }
   }
 
+  /// Pobiera obraz z pamięci podręcznej na podstawie identyfikatora.
   Future<MyImage?> getCachedImage(
       String imageId, String userLogin, String category) async {
     final prefs = await SharedPreferences.getInstance();
@@ -124,6 +133,7 @@ class ApiService {
     return null;
   }
 
+  /// Usuwa obraz z serwera i pamięci podręcznej.
   Future<void> deleteImage(
       String imageId, String userLogin, String category) async {
     final url = Uri.parse('$apiUrl/images/delete/$imageId');
@@ -158,6 +168,7 @@ class ApiService {
     }
   }
 
+  /// Pobiera obrazy z serwera.
   Future<List<MyImage>> getImages(String userLogin, String category) async {
     try {
       final response =
@@ -180,6 +191,7 @@ class ApiService {
     }
   }
 
+  /// Zmienia nazwę pliku na serwerze i aktualizuje cache.
   Future<String> changeFilename(String imageId, String newFilename,
       String userLogin, String category) async {
     final url = Uri.parse('$apiUrl/images/editFilename/$imageId/$newFilename');
@@ -218,10 +230,12 @@ class ApiService {
     return imageId; // W razie niepowodzenia zwróć stare ID
   }
 
+  /// Oblicza wartość hash (SHA-512) dla danego ciągu znaków.
   Future<String> calculateSha512(String data) async {
     return sha512.convert(base64Decode(data)).toString();
   }
 
+  /// Przesyła obraz na serwer.
   Future<void> uploadImage(File file, String userLogin, String category,
       Function(MyImage) addImage) async {
     final url = Uri.parse('$apiUrl/images/upload/$userLogin/$category');
@@ -259,7 +273,7 @@ class ApiService {
     }
   }
 
-  // Rejestracja
+  /// Rejestracja nowego użytkownika.
   Future<void> createUser(User user) async {
     final url = Uri.parse('$apiUrl/users/add');
     final headers = {'Content-Type': 'application/json'};
@@ -275,6 +289,7 @@ class ApiService {
     }
   }
 
+  /// Logowanie użytkownika.
   Future<void> login(User user) async {
     final url = Uri.parse('$apiUrl/users/login');
     final headers = {'Content-Type': 'application/json'};
@@ -292,6 +307,7 @@ class ApiService {
     }
   }
 
+  /// Pobiera obraz z serwera lub z pamięci podręcznej na podstawie identyfikatora.
   Future<MyImage?> getImage(
       String userLogin, String category, String imageId) async {
     MyImage? cachedImage = await getCachedImage(imageId, userLogin, category);

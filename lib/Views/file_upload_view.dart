@@ -10,12 +10,21 @@ import 'package:photogalleryapp/Models/MyImage.dart';
 
 import '../Services/ApiService.dart';
 
+/// Widok umożliwiający użytkownikowi przesyłanie plików (obrazów).
 class FileUploadView extends StatefulWidget {
+  /// Login użytkownika.
   final String userLogin;
+
+  /// Kategoria, do której obraz zostanie przypisany.
   final String category;
+
+  /// Funkcja zamykająca dolny arkusz.
   final VoidCallback closeSheet;
+
+  /// Funkcja dodająca obraz do galerii.
   final Function(MyImage) addImage;
 
+  /// Konstruktor przyjmujący wymagane parametry.
   const FileUploadView({
     Key? key,
     required this.userLogin,
@@ -28,12 +37,21 @@ class FileUploadView extends StatefulWidget {
   _FileUploadViewState createState() => _FileUploadViewState();
 }
 
+/// Stan widoku przesyłania plików.
 class _FileUploadViewState extends State<FileUploadView> {
+  /// Wybrany plik.
   File? selectedFile;
+
+  /// Wiadomość o błędzie wyświetlana, gdy nie wybrano pliku.
   String errorMessage = "Brak wybranego pliku.";
+
+  /// Flaga wskazująca, czy przycisk przesyłania pliku jest wyłączony.
   bool isButtonDisabled = true;
 
+  /// Picker używany do wyboru obrazów.
   final ImagePicker _picker = ImagePicker();
+
+  /// Instancja serwisu API do przesyłania obrazów.
   final ApiService apiService = ApiService();
 
   @override
@@ -98,6 +116,7 @@ class _FileUploadViewState extends State<FileUploadView> {
     );
   }
 
+  /// Metoda umożliwiająca wybór pliku z urządzenia.
   Future<void> selectFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -123,6 +142,7 @@ class _FileUploadViewState extends State<FileUploadView> {
     }
   }
 
+  /// Metoda umożliwiająca zrobienie zdjęcia za pomocą kamery.
   Future<void> captureImage() async {
     final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
 
@@ -145,6 +165,7 @@ class _FileUploadViewState extends State<FileUploadView> {
     }
   }
 
+  /// Metoda umożliwiająca przycięcie wybranego obrazu.
   Future<void> cropImage() async {
     if (selectedFile == null) return;
 
@@ -179,11 +200,25 @@ class _FileUploadViewState extends State<FileUploadView> {
     }
   }
 
+  /// Metoda sprawdzająca, czy wybrany plik ma prawidłowy typ MIME.
+  ///
+  /// Parametr:
+  /// - `file`: Plik do sprawdzenia.
+  ///
+  /// Zwraca:
+  /// - `bool`: True, jeśli plik jest typu .jpg lub .png, w przeciwnym razie False.
   bool isFileTypeAllowed(File file) {
     final mimeType = lookupMimeType(file.path);
     return mimeType == 'image/jpeg' || mimeType == 'image/png';
   }
 
+  /// Metoda przesyłająca wybrany obraz na serwer.
+  ///
+  /// Jeśli użytkownik nie wprowadził loginu lub kategorii, lub nie wybrano pliku, metoda zwraca.
+  ///
+  /// W przeciwnym razie przesyła obraz na serwer za pomocą `apiService`.
+  /// Po pomyślnym przesłaniu obraz zostaje dodany do galerii, a arkusz zamknięty.
+  /// W przypadku błędu wyświetlana jest odpowiednia wiadomość o błędzie.
   Future<void> uploadImage() async {
     if (widget.userLogin.isEmpty ||
         widget.category.isEmpty ||
@@ -197,7 +232,7 @@ class _FileUploadViewState extends State<FileUploadView> {
       widget.closeSheet();
     } catch (e) {
       setState(() {
-        errorMessage = "Image upload failed: $e";
+        errorMessage = "Nie udało się przesłać obrazu: $e";
       });
     }
   }

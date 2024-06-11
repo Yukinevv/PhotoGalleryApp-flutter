@@ -9,10 +9,15 @@ import 'file_upload_view.dart';
 import 'filters_view.dart';
 import 'selected_image_popup_view.dart';
 
+/// Widok listy obrazów dla wybranej kategorii.
 class ImageListView extends StatefulWidget {
+  /// Login użytkownika.
   final String userLogin;
+
+  /// Kategoria, dla której wyświetlane są obrazy.
   final String category;
 
+  /// Konstruktor przyjmujący wymagane parametry.
   const ImageListView(
       {Key? key, required this.userLogin, required this.category})
       : super(key: key);
@@ -21,12 +26,24 @@ class ImageListView extends StatefulWidget {
   _ImageListViewState createState() => _ImageListViewState();
 }
 
+/// Stan widoku listy obrazów.
 class _ImageListViewState extends State<ImageListView> {
+  /// Lista obrazów.
   List<MyImage> images = [];
+
+  /// Aktualnie wybrany obraz.
   MyImage? selectedImage;
+
+  /// Notifier dla pola filtrowania.
   ValueNotifier<String> filterField = ValueNotifier<String>("");
+
+  /// Instancja serwisu API do komunikacji z serwerem.
   final ApiService apiService = ApiService();
+
+  /// Flaga wskazująca, czy obrazy są ładowane.
   bool isLoading = false;
+
+  /// Kategoria po przetworzeniu znaków polskich.
   late final String category;
 
   @override
@@ -36,6 +53,7 @@ class _ImageListViewState extends State<ImageListView> {
     _initializeImages();
   }
 
+  /// Metoda inicjalizująca obrazy.
   Future<void> _initializeImages() async {
     setState(() {
       isLoading = true;
@@ -53,6 +71,7 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
+  /// Metoda ładująca obrazy z serwera.
   Future<void> loadImages() async {
     setState(() {
       isLoading = true;
@@ -72,6 +91,7 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
+  /// Metoda ładująca identyfikatory obrazów.
   Future<void> loadImageIds() async {
     try {
       List<String> imageIds =
@@ -88,6 +108,7 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
+  /// Metoda ładująca brakujące obrazy.
   Future<void> loadMissingImages(List<String> missingImageIds) async {
     try {
       List<MyImage> missingImages = await apiService.getImagesByIds(
@@ -100,6 +121,7 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
+  /// Aktualizuje obraz w liście.
   void updateImage(MyImage updatedImage, String oldImageId) {
     setState(() {
       final index = images.indexWhere((image) => image.id == oldImageId);
@@ -109,12 +131,14 @@ class _ImageListViewState extends State<ImageListView> {
     });
   }
 
+  /// Usuwa obraz z listy.
   void removeImage(String imageId) {
     setState(() {
       images.removeWhere((image) => image.id == imageId);
     });
   }
 
+  /// Filtruje obrazy na podstawie wartości w polu filtrowania.
   List<MyImage> getFilteredImages() {
     if (filterField.value.isEmpty) {
       return images;
@@ -127,6 +151,7 @@ class _ImageListViewState extends State<ImageListView> {
     }
   }
 
+  /// Sortuje obrazy według nazwy.
   void sortByName(bool ascending) {
     setState(() {
       images.sort((a, b) {
@@ -139,6 +164,7 @@ class _ImageListViewState extends State<ImageListView> {
     });
   }
 
+  /// Dodaje nowy obraz do listy.
   void addImage(MyImage newImage) {
     setState(() {
       images.add(newImage);
@@ -203,7 +229,7 @@ class _ImageListViewState extends State<ImageListView> {
                                           updateImage(updatedImage, oldImageId),
                                       onDelete: removeImage,
                                       category: category,
-                                      userLogin: widget.userLogin, // Dodane
+                                      userLogin: widget.userLogin,
                                     ),
                                   );
                                 },

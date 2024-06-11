@@ -3,10 +3,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'change_password_view.dart';
 import 'login_form_view.dart';
 
+/// Widok ustawień aplikacji, umożliwiający zmianę hasła, wylogowanie oraz dostęp do linków.
 class SettingsView extends StatelessWidget {
+  /// Notifier wskazujący, czy użytkownik jest zalogowany.
   final ValueNotifier<bool> isLoggedIn;
+
+  /// Login użytkownika.
   final String userLogin;
 
+  /// Konstruktor przyjmujący wymagane parametry.
   const SettingsView(
       {Key? key, required this.isLoggedIn, required this.userLogin})
       : super(key: key);
@@ -19,10 +24,13 @@ class SettingsView extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          /// Wyświetla login użytkownika w pogrubionym stylu.
           ListTile(
             title: Text(userLogin,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
+
+          /// Opcja zmiany hasła, przekierowuje do widoku `ChangePasswordView`.
           ListTile(
             title: const Text('Zmień hasło'),
             onTap: () {
@@ -35,6 +43,8 @@ class SettingsView extends StatelessWidget {
               );
             },
           ),
+
+          /// Opcja wylogowania, wyświetla dialog potwierdzenia.
           ListTile(
             title: const Text('Wyloguj'),
             onTap: () {
@@ -44,6 +54,8 @@ class SettingsView extends StatelessWidget {
           const ListTile(
             title: Text('Inne', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
+
+          /// Opcja otwarcia linku do API.
           ListTile(
             title: const Text('Link do API'),
             onTap: () async {
@@ -62,6 +74,8 @@ class SettingsView extends StatelessWidget {
               }
             },
           ),
+
+          /// Opcja otwarcia innego linku.
           ListTile(
             title: const Text('Inny link'),
             onTap: () async {
@@ -85,6 +99,7 @@ class SettingsView extends StatelessWidget {
     );
   }
 
+  /// Wyświetla dialog potwierdzenia wylogowania.
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,

@@ -2,14 +2,27 @@ import 'package:flutter/material.dart';
 import 'file_upload_view.dart';
 import '../Models/MyImage.dart';
 
+/// Widok filtrów umożliwiający wyszukiwanie, sortowanie oraz dodawanie obrazów.
 class FiltersView extends StatefulWidget {
+  /// Login użytkownika.
   final String userLogin;
+
+  /// Kategoria, do której obrazy są przypisane.
   final String category;
+
+  /// Liczba przefiltrowanych obrazów.
   final int filteredImagesCount;
+
+  /// Notifier dla pola filtrowania.
   final ValueNotifier<String> filterField;
+
+  /// Funkcja sortująca obrazy według nazwy.
   final Function(bool) sortByName;
+
+  /// Funkcja dodająca obraz do galerii.
   final Function(MyImage) addImage;
 
+  /// Konstruktor przyjmujący wymagane parametry.
   const FiltersView({
     Key? key,
     required this.userLogin,
@@ -24,7 +37,9 @@ class FiltersView extends StatefulWidget {
   _FiltersViewState createState() => _FiltersViewState();
 }
 
+/// Stan widoku filtrów.
 class _FiltersViewState extends State<FiltersView> {
+  /// Flaga wskazująca, czy dolny arkusz jest wyświetlony.
   bool isSheetPresented = false;
 
   @override
@@ -86,7 +101,7 @@ class _FiltersViewState extends State<FiltersView> {
                         closeSheet: () {
                           setState(() => isSheetPresented = false);
                         },
-                        addImage: widget.addImage, // Zmienione
+                        addImage: widget.addImage,
                       ),
                     );
                   }

@@ -5,24 +5,38 @@ import '../Services/ApiService.dart';
 import 'register_form_view.dart';
 import 'dock_navigation_view.dart';
 
+/// Widok formularza logowania do aplikacji.
 class LoginFormView extends StatefulWidget {
+  /// Notifier wskazujący, czy użytkownik jest zalogowany.
+  final ValueNotifier<bool> isLoggedIn;
+
+  /// Notifier przechowujący login użytkownika.
+  final ValueNotifier<String> userLogin;
+
+  /// Konstruktor przyjmujący wymagane parametry.
   const LoginFormView(
       {Key? key, required this.isLoggedIn, required this.userLogin})
       : super(key: key);
-
-  final ValueNotifier<bool> isLoggedIn;
-  final ValueNotifier<String> userLogin;
 
   @override
   _LoginFormViewState createState() => _LoginFormViewState();
 }
 
+/// Stan widoku formularza logowania.
 class _LoginFormViewState extends State<LoginFormView> {
+  /// Kontroler tekstu dla pola loginu.
   final TextEditingController _loginController = TextEditingController();
+
+  /// Kontroler tekstu dla pola hasła.
   final TextEditingController _passwordController = TextEditingController();
+
+  /// Flaga wskazująca, czy użytkownik chce zapamiętać swoje dane logowania.
   bool _rememberMe = false;
+
+  /// Wiadomość o błędzie, wyświetlana gdy wystąpi problem z logowaniem.
   String errorMessage = "";
 
+  /// Instancja serwisu API do komunikacji z serwerem.
   final ApiService apiService = ApiService();
 
   @override
@@ -31,6 +45,7 @@ class _LoginFormViewState extends State<LoginFormView> {
     _loadSavedCredentials();
   }
 
+  /// Ładuje zapisane dane logowania z pamięci urządzenia.
   Future<void> _loadSavedCredentials() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedLogin = prefs.getString('savedLogin');
@@ -49,6 +64,7 @@ class _LoginFormViewState extends State<LoginFormView> {
     }
   }
 
+  /// Zapisuje dane logowania w pamięci urządzenia.
   Future<void> _saveCredentials() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if (_rememberMe) {
@@ -145,6 +161,7 @@ class _LoginFormViewState extends State<LoginFormView> {
     );
   }
 
+  /// Loguje użytkownika po kliknięciu przycisku "Zaloguj".
   void _loginUser() async {
     if (_loginController.text.isEmpty || _passwordController.text.isEmpty) {
       if (mounted) {

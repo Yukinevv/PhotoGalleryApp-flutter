@@ -4,29 +4,50 @@ import '../Services/ApiService.dart';
 import 'login_form_view.dart';
 import 'dock_navigation_view.dart';
 
+/// Widok formularza rejestracji nowego użytkownika.
 class RegisterFormView extends StatefulWidget {
+  /// Notifier wskazujący, czy użytkownik jest zalogowany.
+  final ValueNotifier<bool> isLoggedIn;
+
+  /// Notifier przechowujący login użytkownika.
+  final ValueNotifier<String> userLogin;
+
+  /// Konstruktor przyjmujący wymagane parametry.
   const RegisterFormView(
       {Key? key, required this.isLoggedIn, required this.userLogin})
       : super(key: key);
-
-  final ValueNotifier<bool> isLoggedIn;
-  final ValueNotifier<String> userLogin;
 
   @override
   _RegisterFormViewState createState() => _RegisterFormViewState();
 }
 
+/// Stan widoku formularza rejestracji.
 class _RegisterFormViewState extends State<RegisterFormView> {
+  /// Kontroler tekstu dla pola loginu.
   final TextEditingController _loginController = TextEditingController();
+
+  /// Kontroler tekstu dla pola email.
   final TextEditingController _emailController = TextEditingController();
+
+  /// Kontroler tekstu dla pola pierwszego hasła.
   final TextEditingController _password1Controller = TextEditingController();
+
+  /// Kontroler tekstu dla pola powtórzenia hasła.
   final TextEditingController _password2Controller = TextEditingController();
+
+  /// Wiadomość o błędzie, wyświetlana gdy wystąpi problem z rejestracją.
   String errorMessage = '';
+
+  /// Wiadomość o sukcesie, wyświetlana po udanej rejestracji.
   String successMessage = '';
 
+  /// Instancja serwisu API do komunikacji z serwerem.
   final ApiService apiService = ApiService();
 
+  /// Flaga wskazująca, czy pierwsze hasło jest nieprawidłowe.
   bool isInputInvalid1 = false;
+
+  /// Flaga wskazująca, czy drugie hasło jest nieprawidłowe.
   bool isInputInvalid2 = false;
 
   @override
@@ -112,6 +133,7 @@ class _RegisterFormViewState extends State<RegisterFormView> {
     );
   }
 
+  /// Rejestruje nowego użytkownika po kliknięciu przycisku "Zarejestruj się".
   void _registerUser() async {
     if (_password1Controller.text != _password2Controller.text) {
       setState(() => errorMessage = "Podane hasła nie są takie same!");
@@ -147,6 +169,7 @@ class _RegisterFormViewState extends State<RegisterFormView> {
     }
   }
 
+  /// Wyświetla dialog informujący o pomyślnej rejestracji.
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -174,6 +197,7 @@ class _RegisterFormViewState extends State<RegisterFormView> {
     );
   }
 
+  /// Przekierowuje użytkownika do widoku głównego po pomyślnej rejestracji.
   void _navigateToHome() {
     Navigator.pushReplacement(
       context,

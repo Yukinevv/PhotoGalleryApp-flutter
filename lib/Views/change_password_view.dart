@@ -4,9 +4,12 @@ import 'dart:convert';
 
 import 'package:photogalleryapp/constants.dart';
 
+/// Widok zmiany hasła, który pozwala użytkownikowi zmienić swoje hasło.
 class ChangePasswordView extends StatefulWidget {
+  /// Login użytkownika, który jest przekazywany do widoku.
   final String userLogin;
 
+  /// Konstruktor, który przyjmuje login użytkownika.
   const ChangePasswordView({Key? key, required this.userLogin})
       : super(key: key);
 
@@ -14,18 +17,41 @@ class ChangePasswordView extends StatefulWidget {
   _ChangePasswordViewState createState() => _ChangePasswordViewState();
 }
 
+/// Stan widoku zmiany hasła.
 class _ChangePasswordViewState extends State<ChangePasswordView> {
+  /// Kontroler tekstu dla pola z obecnym hasłem.
   final TextEditingController _currentPasswordController =
       TextEditingController();
+
+  /// Kontroler tekstu dla pola z nowym hasłem.
   final TextEditingController _newPasswordController = TextEditingController();
+
+  /// Kontroler tekstu dla pola z potwierdzeniem nowego hasła.
   final TextEditingController _confirmNewPasswordController =
       TextEditingController();
+
+  /// Wiadomość o błędzie, która jest wyświetlana w przypadku problemów.
   String errorMessage = "";
+
+  /// Wiadomość o sukcesie, która jest wyświetlana po pomyślnej zmianie hasła.
   String successMessage = "";
+
+  /// Flaga wskazująca, czy dialog potwierdzenia jest wyświetlany.
   bool isShowingConfirmationDialog = false;
+
+  /// Flaga wskazująca, czy wejście dla nowego hasła jest nieprawidłowe.
   bool isInputInvalid1 = false;
+
+  /// Flaga wskazująca, czy wejście dla potwierdzenia nowego hasła jest nieprawidłowe.
   bool isInputInvalid2 = false;
 
+  /// Metoda sprawdzająca, czy wejście jest prawidłowe.
+  ///
+  /// Parametr:
+  /// - `input`: String reprezentujący wejście użytkownika.
+  ///
+  /// Zwraca:
+  /// - `bool`: True, jeśli wejście jest prawidłowe (długość >= 5), w przeciwnym razie False.
   bool isValid(String input) {
     return input.length >= 5;
   }
@@ -119,6 +145,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
     );
   }
 
+  /// Wyświetla dialog potwierdzenia zmiany hasła.
   void _showConfirmationDialog() {
     showDialog(
       context: context,
@@ -146,6 +173,11 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
     );
   }
 
+  /// Metoda asynchroniczna zmieniająca hasło użytkownika.
+  ///
+  /// Sprawdza, czy wszystkie pola są wypełnione, hasła się zgadzają,
+  /// oraz czy hasło spełnia wymagania. Następnie wysyła żądanie HTTP
+  /// do zmiany hasła.
   void _changePassword() async {
     String currentPassword = _currentPasswordController.text;
     String newPassword = _newPasswordController.text;
